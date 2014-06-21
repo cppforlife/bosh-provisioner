@@ -218,7 +218,7 @@ func (p RunitProvisioner) stopRunsv(name string) error {
 			return nil
 		}
 
-		time.Sleep(100 * time.Millisecond)
+		time.Sleep(500 * time.Millisecond)
 	}
 
 	return bosherr.New("Failed to stop runsv for %s. Output: %s", name, lastStatusStdout)

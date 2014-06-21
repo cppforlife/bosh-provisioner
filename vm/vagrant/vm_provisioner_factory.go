@@ -41,7 +41,7 @@ func NewVMProvisionerFactory(
 	}
 }
 
-func (f VMProvisionerFactory) NewVMProvisioner() VMProvisioner {
+func (f VMProvisionerFactory) NewVMProvisioner() *VMProvisioner {
 	cmds := NewSimpleCmds(f.runner, f.logger)
 
 	vcapUserProvisioner := NewVCAPUserProvisioner(

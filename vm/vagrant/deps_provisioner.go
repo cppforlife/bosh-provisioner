@@ -45,10 +45,10 @@ func (p DepsProvisioner) Provision() error {
 		"cmake",           // 6sec
 		"libcap-dev",      // 3sec
 
-		"libbz2-1.0",  // noop on precise64 Vagrant box
-		"libbz2-dev",  // 2sec
-		"libxslt-dev", // 2sec
-		"libxml2-dev", // 2sec
+		"libbz2-1.0",   // noop on precise64 Vagrant box
+		"libbz2-dev",   // 2sec
+		"libxslt1-dev", // 2sec
+		"libxml2-dev",  // 2sec
 
 		// For warden
 		"quota", // 1sec
@@ -56,8 +56,19 @@ func (p DepsProvisioner) Provision() error {
 
 	stage := p.eventLog.BeginStage("Installing dependencies", len(pkgNames))
 
+	installedPkgs, err := p.listInstalledPkgs()
+	if err != nil {
+		return bosherr.WrapError(err, "Listing installed packages")
+	}
+
 	for _, pkgName := range pkgNames {
 		task := stage.BeginTask(fmt.Sprintf("Package %s", pkgName))
+
+		if p.isPkgInstalled(pkgName, installedPkgs) {
+			p.logger.Debug(depsProvisionerLogTag, "Package %s is already installed", pkgName)
+			task.End(nil)
+			continue
+		}
 
 		err := task.End(p.installPkg(pkgName))
 		if err != nil {
@@ -69,6 +80,8 @@ func (p DepsProvisioner) Provision() error {
 }
 
 func (p DepsProvisioner) installPkg(name string) error {
+	p.logger.Debug(depsProvisionerLogTag, "Installing package %s", name)
+
 	_, _, _, err := p.runner.RunCommand("apt-get", "-y", "install", name)
 	if err == nil {
 		return nil
@@ -89,4 +102,34 @@ func (p DepsProvisioner) installPkg(name string) error {
 	}
 
 	return nil
+}
+
+func (p DepsProvisioner) listInstalledPkgs() ([]string, error) {
+	var installedPkgs []string
+
+	installedPkgStdout, _, _, err := p.runner.RunCommand("dpkg", "--get-selections")
+	if err != nil {
+		return installedPkgs, bosherr.WrapError(err, "dkpg query")
+	}
+
+	for _, line := range strings.Split(installedPkgStdout, "\n") {
+		pieces := strings.Fields(line)
+
+		// Last line is empty
+		if len(pieces) == 2 && pieces[1] == "install" {
+			installedPkgs = append(installedPkgs, pieces[0])
+		}
+	}
+
+	return installedPkgs, nil
+}
+
+func (p DepsProvisioner) isPkgInstalled(pkgName string, installedPkgs []string) bool {
+	for _, installedPkgName := range installedPkgs {
+		if pkgName == installedPkgName {
+			return true
+		}
+	}
+
+	return false
 }
