@@ -10,11 +10,9 @@ import (
 	bpvm "boshprovisioner/vm"
 )
 
-const deploymentProvisionerLogTag = "DeploymentProvisioner"
-
-// DeploymentProvisioner interprets deployment manifest and
-// configures system just like regular BOSH VM would be configured.
-type DeploymentProvisioner struct {
+// SingleConfiguredVMProvisioner interprets deployment manifest and
+// configures 1 VM just like regular BOSH VM.
+type SingleConfiguredVMProvisioner struct {
 	manifestPath            string
 	deploymentReaderFactory bpdep.ReaderFactory
 
@@ -26,7 +24,7 @@ type DeploymentProvisioner struct {
 	logger   boshlog.Logger
 }
 
-func NewDeploymentProvisioner(
+func NewSingleConfiguredVMProvisioner(
 	manifestPath string,
 	deploymentReaderFactory bpdep.ReaderFactory,
 	vmProvisioner bpvm.VMProvisioner,
@@ -34,8 +32,8 @@ func NewDeploymentProvisioner(
 	instanceProvisioner bpinstance.InstanceProvisioner,
 	eventLog bpeventlog.Log,
 	logger boshlog.Logger,
-) DeploymentProvisioner {
-	return DeploymentProvisioner{
+) SingleConfiguredVMProvisioner {
+	return SingleConfiguredVMProvisioner{
 		manifestPath:            manifestPath,
 		deploymentReaderFactory: deploymentReaderFactory,
 
@@ -48,7 +46,7 @@ func NewDeploymentProvisioner(
 	}
 }
 
-func (p DeploymentProvisioner) Provision() error {
+func (p SingleConfiguredVMProvisioner) Provision() error {
 	stage := p.eventLog.BeginStage("Setting up instance", 2)
 
 	reader := p.deploymentReaderFactory.NewManifestReader(p.manifestPath)
@@ -106,9 +104,7 @@ func (p DeploymentProvisioner) Provision() error {
 	return nil
 }
 
-func (p DeploymentProvisioner) validateInstance(deployment bpdep.Deployment) (bpdep.Job, bpdep.Instance, error) {
-	p.logger.Debug(deploymentProvisionerLogTag, "Validate instance")
-
+func (p SingleConfiguredVMProvisioner) validateInstance(deployment bpdep.Deployment) (bpdep.Job, bpdep.Instance, error) {
 	var job bpdep.Job
 	var instance bpdep.Instance
 
