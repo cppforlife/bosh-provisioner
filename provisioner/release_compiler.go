@@ -1,15 +1,15 @@
 package provisioner
 
 import (
-	bosherr "bosh/errors"
-	boshlog "bosh/logger"
+	bosherr "github.com/cloudfoundry/bosh-agent/errors"
+	boshlog "github.com/cloudfoundry/bosh-agent/logger"
 
-	bpdep "boshprovisioner/deployment"
-	bpeventlog "boshprovisioner/eventlog"
-	bptplcomp "boshprovisioner/instance/templatescompiler"
-	bppkgscomp "boshprovisioner/packagescompiler"
-	bprel "boshprovisioner/release"
-	bpvm "boshprovisioner/vm"
+	bpdep "github.com/cppforlife/bosh-provisioner/deployment"
+	bpeventlog "github.com/cppforlife/bosh-provisioner/eventlog"
+	bptplcomp "github.com/cppforlife/bosh-provisioner/instance/templatescompiler"
+	bppkgscomp "github.com/cppforlife/bosh-provisioner/packagescompiler"
+	bprel "github.com/cppforlife/bosh-provisioner/release"
+	bpvm "github.com/cppforlife/bosh-provisioner/vm"
 )
 
 const releaseCompilerLogTag = "ReleaseCompiler"

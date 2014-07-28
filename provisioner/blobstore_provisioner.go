@@ -3,8 +3,8 @@ package provisioner
 import (
 	"os"
 
-	boshlog "bosh/logger"
-	boshsys "bosh/system"
+	boshlog "github.com/cloudfoundry/bosh-agent/logger"
+	boshsys "github.com/cloudfoundry/bosh-agent/system"
 )
 
 type BlobstoreProvisioner struct {

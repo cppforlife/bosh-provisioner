@@ -3,15 +3,15 @@ package templatescompiler
 import (
 	"fmt"
 
-	boshblob "bosh/blobstore"
-	bosherr "bosh/errors"
-	boshlog "bosh/logger"
+	boshblob "github.com/cloudfoundry/bosh-agent/blobstore"
+	bosherr "github.com/cloudfoundry/bosh-agent/errors"
+	boshlog "github.com/cloudfoundry/bosh-agent/logger"
 
-	bpdep "boshprovisioner/deployment"
-	bpjobsrepo "boshprovisioner/instance/templatescompiler/jobsrepo"
-	bptplsrepo "boshprovisioner/instance/templatescompiler/templatesrepo"
-	bprel "boshprovisioner/release"
-	bpreljob "boshprovisioner/release/job"
+	bpdep "github.com/cppforlife/bosh-provisioner/deployment"
+	bpjobsrepo "github.com/cppforlife/bosh-provisioner/instance/templatescompiler/jobsrepo"
+	bptplsrepo "github.com/cppforlife/bosh-provisioner/instance/templatescompiler/templatesrepo"
+	bprel "github.com/cppforlife/bosh-provisioner/release"
+	bpreljob "github.com/cppforlife/bosh-provisioner/release/job"
 )
 
 type ConcreteTemplatesCompiler struct {

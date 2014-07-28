@@ -3,16 +3,16 @@ package packagescompiler
 import (
 	"fmt"
 
-	boshcomp "bosh/agent/compiler"
-	boshblob "bosh/blobstore"
-	bosherr "bosh/errors"
-	boshlog "bosh/logger"
+	boshcomp "github.com/cloudfoundry/bosh-agent/agent/compiler"
+	boshblob "github.com/cloudfoundry/bosh-agent/blobstore"
+	bosherr "github.com/cloudfoundry/bosh-agent/errors"
+	boshlog "github.com/cloudfoundry/bosh-agent/logger"
 
-	bpagentclient "boshprovisioner/agent/client"
-	bpeventlog "boshprovisioner/eventlog"
-	bpcpkgsrepo "boshprovisioner/packagescompiler/compiledpackagesrepo"
-	bppkgsrepo "boshprovisioner/packagescompiler/packagesrepo"
-	bprel "boshprovisioner/release"
+	bpagentclient "github.com/cppforlife/bosh-provisioner/agent/client"
+	bpeventlog "github.com/cppforlife/bosh-provisioner/eventlog"
+	bpcpkgsrepo "github.com/cppforlife/bosh-provisioner/packagescompiler/compiledpackagesrepo"
+	bppkgsrepo "github.com/cppforlife/bosh-provisioner/packagescompiler/packagesrepo"
+	bprel "github.com/cppforlife/bosh-provisioner/release"
 )
 
 const concretePackagesCompilerLogTag = "ConcretePackagesCompiler"

@@ -1,11 +1,11 @@
 package compiledpackagesrepo
 
 import (
-	bosherr "bosh/errors"
-	boshlog "bosh/logger"
+	bosherr "github.com/cloudfoundry/bosh-agent/errors"
+	boshlog "github.com/cloudfoundry/bosh-agent/logger"
 
-	bpindex "boshprovisioner/index"
-	bprel "boshprovisioner/release"
+	bpindex "github.com/cppforlife/bosh-provisioner/index"
+	bprel "github.com/cppforlife/bosh-provisioner/release"
 )
 
 type CCPRepository struct {

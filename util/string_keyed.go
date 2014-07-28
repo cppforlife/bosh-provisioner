@@ -3,7 +3,7 @@ package util
 import (
 	"reflect"
 
-	bosherr "bosh/errors"
+	bosherr "github.com/cloudfoundry/bosh-agent/errors"
 )
 
 type stringKeyed struct{}

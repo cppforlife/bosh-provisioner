@@ -1,7 +1,7 @@
 package release
 
 import (
-	bprelman "boshprovisioner/release/manifest"
+	bprelman "github.com/cppforlife/bosh-provisioner/release/manifest"
 )
 
 type Release struct {

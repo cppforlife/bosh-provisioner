@@ -3,11 +3,11 @@ package release
 import (
 	"path/filepath"
 
-	bosherr "bosh/errors"
-	boshlog "bosh/logger"
-	boshsys "bosh/system"
+	bosherr "github.com/cloudfoundry/bosh-agent/errors"
+	boshlog "github.com/cloudfoundry/bosh-agent/logger"
+	boshsys "github.com/cloudfoundry/bosh-agent/system"
 
-	bprelman "boshprovisioner/release/manifest"
+	bprelman "github.com/cppforlife/bosh-provisioner/release/manifest"
 )
 
 const rawDirReaderLogTag = "DirReader"

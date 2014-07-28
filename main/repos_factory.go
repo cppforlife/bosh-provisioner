@@ -3,16 +3,16 @@ package main
 import (
 	"path/filepath"
 
-	boshblob "bosh/blobstore"
-	boshlog "bosh/logger"
-	boshsys "bosh/system"
+	boshblob "github.com/cloudfoundry/bosh-agent/blobstore"
+	boshlog "github.com/cloudfoundry/bosh-agent/logger"
+	boshsys "github.com/cloudfoundry/bosh-agent/system"
 
-	bpdload "boshprovisioner/downloader"
-	bpindex "boshprovisioner/index"
-	bpjobsrepo "boshprovisioner/instance/templatescompiler/jobsrepo"
-	bptplsrepo "boshprovisioner/instance/templatescompiler/templatesrepo"
-	bpcpkgsrepo "boshprovisioner/packagescompiler/compiledpackagesrepo"
-	bppkgsrepo "boshprovisioner/packagescompiler/packagesrepo"
+	bpdload "github.com/cppforlife/bosh-provisioner/downloader"
+	bpindex "github.com/cppforlife/bosh-provisioner/index"
+	bpjobsrepo "github.com/cppforlife/bosh-provisioner/instance/templatescompiler/jobsrepo"
+	bptplsrepo "github.com/cppforlife/bosh-provisioner/instance/templatescompiler/templatesrepo"
+	bpcpkgsrepo "github.com/cppforlife/bosh-provisioner/packagescompiler/compiledpackagesrepo"
+	bppkgsrepo "github.com/cppforlife/bosh-provisioner/packagescompiler/packagesrepo"
 )
 
 type ReposFactory struct {

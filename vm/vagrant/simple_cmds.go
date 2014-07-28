@@ -1,8 +1,8 @@
 package vagrant
 
 import (
-	boshlog "bosh/logger"
-	boshsys "bosh/system"
+	boshlog "github.com/cloudfoundry/bosh-agent/logger"
+	boshsys "github.com/cloudfoundry/bosh-agent/system"
 )
 
 type SimpleCmds struct {

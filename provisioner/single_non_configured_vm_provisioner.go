@@ -1,11 +1,11 @@
 package provisioner
 
 import (
-	bosherr "bosh/errors"
-	boshlog "bosh/logger"
+	bosherr "github.com/cloudfoundry/bosh-agent/errors"
+	boshlog "github.com/cloudfoundry/bosh-agent/logger"
 
-	bpeventlog "boshprovisioner/eventlog"
-	bpvm "boshprovisioner/vm"
+	bpeventlog "github.com/cppforlife/bosh-provisioner/eventlog"
+	bpvm "github.com/cppforlife/bosh-provisioner/vm"
 )
 
 // SingleNonConfiguredVMProvisioner configures 1 VM as a regular empty BOSH VM.

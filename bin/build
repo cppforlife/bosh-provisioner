@@ -5,4 +5,4 @@ set -e
 bin=$(dirname $0)
 base=$(dirname $bin)
 
-$bin/go build -o $base/out/bosh-provisioner bosh-provisioner/main
+$bin/go build -o $base/out/bosh-provisioner github.com/cppforlife/bosh-provisioner/main

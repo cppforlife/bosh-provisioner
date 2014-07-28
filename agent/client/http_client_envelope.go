@@ -3,8 +3,8 @@ package client
 import (
 	"encoding/json"
 
-	boshaction "bosh/agent/action"
-	bosherr "bosh/errors"
+	boshaction "github.com/cloudfoundry/bosh-agent/agent/action"
+	bosherr "github.com/cloudfoundry/bosh-agent/errors"
 )
 
 type requestEnvelope struct {

@@ -3,9 +3,9 @@ package deployment
 import (
 	gonet "net"
 
-	boshaction "bosh/agent/action"
+	boshaction "github.com/cloudfoundry/bosh-agent/agent/action"
 
-	bpdepman "boshprovisioner/deployment/manifest"
+	bpdepman "github.com/cppforlife/bosh-provisioner/deployment/manifest"
 )
 
 type Deployment struct {

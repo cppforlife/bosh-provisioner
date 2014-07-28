@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"strings"
 
-	bosherr "bosh/errors"
+	bosherr "github.com/cloudfoundry/bosh-agent/errors"
 
-	bpdep "boshprovisioner/deployment"
-	bpreljob "boshprovisioner/release/job"
+	bpdep "github.com/cppforlife/bosh-provisioner/deployment"
+	bpreljob "github.com/cppforlife/bosh-provisioner/release/job"
 )
 
 type RenderProperties struct {

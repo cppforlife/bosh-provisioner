@@ -3,7 +3,7 @@ package util
 import (
 	"encoding/base64"
 
-	bosherr "bosh/errors"
+	bosherr "github.com/cloudfoundry/bosh-agent/errors"
 )
 
 func DecodePossibleBase64Str(str string) (string, error) {

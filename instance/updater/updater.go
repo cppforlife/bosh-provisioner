@@ -3,11 +3,11 @@ package updater
 import (
 	"fmt"
 
-	bosherr "bosh/errors"
-	boshlog "bosh/logger"
+	bosherr "github.com/cloudfoundry/bosh-agent/errors"
+	boshlog "github.com/cloudfoundry/bosh-agent/logger"
 
-	bpeventlog "boshprovisioner/eventlog"
-	bpapplier "boshprovisioner/instance/updater/applier"
+	bpeventlog "github.com/cppforlife/bosh-provisioner/eventlog"
+	bpapplier "github.com/cppforlife/bosh-provisioner/instance/updater/applier"
 )
 
 const updaterLogTag = "Updater"

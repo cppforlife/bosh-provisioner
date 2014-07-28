@@ -4,7 +4,7 @@ import (
 	"strconv"
 	"strings"
 
-	bosherr "bosh/errors"
+	bosherr "github.com/cloudfoundry/bosh-agent/errors"
 )
 
 type WatchTime [2]int

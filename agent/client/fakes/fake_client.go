@@ -1,12 +1,12 @@
 package fakes
 
 import (
-	boshaction "bosh/agent/action"
-	boshas "bosh/agent/applier/applyspec"
-	boshcomp "bosh/agent/compiler"
-	bosherr "bosh/errors"
+	boshaction "github.com/cloudfoundry/bosh-agent/agent/action"
+	boshas "github.com/cloudfoundry/bosh-agent/agent/applier/applyspec"
+	boshcomp "github.com/cloudfoundry/bosh-agent/agent/compiler"
+	bosherr "github.com/cloudfoundry/bosh-agent/errors"
 
-	bpagclient "boshprovisioner/agent/client"
+	bpagclient "github.com/cppforlife/bosh-provisioner/agent/client"
 )
 
 type FakeClient struct {
@@ -27,7 +27,7 @@ func (c *FakeClient) CancelTask(string) (string, error) {
 	return "", bosherr.New("fake-cancel-task-err")
 }
 
-func (c *FakeClient) SSH(cmd string, params boshaction.SshParams) (map[string]interface{}, error) {
+func (c *FakeClient) SSH(cmd string, params boshaction.SSHParams) (map[string]interface{}, error) {
 	return nil, bosherr.New("fake-ssh-err")
 }
 

@@ -4,7 +4,7 @@ import (
 	gonet "net"
 	"strings"
 
-	bosherr "bosh/errors"
+	bosherr "github.com/cloudfoundry/bosh-agent/errors"
 )
 
 func NewIPsFromStrings(strs []string) ([]gonet.IP, error) {

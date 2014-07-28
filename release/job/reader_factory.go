@@ -3,11 +3,11 @@ package job
 import (
 	"strings"
 
-	boshlog "bosh/logger"
-	boshsys "bosh/system"
+	boshlog "github.com/cloudfoundry/bosh-agent/logger"
+	boshsys "github.com/cloudfoundry/bosh-agent/system"
 
-	bpdload "boshprovisioner/downloader"
-	bptar "boshprovisioner/tar"
+	bpdload "github.com/cppforlife/bosh-provisioner/downloader"
+	bptar "github.com/cppforlife/bosh-provisioner/tar"
 )
 
 const (

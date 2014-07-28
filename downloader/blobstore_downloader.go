@@ -3,9 +3,9 @@ package downloader
 import (
 	gourl "net/url"
 
-	boshblob "bosh/blobstore"
-	bosherr "bosh/errors"
-	boshlog "bosh/logger"
+	boshblob "github.com/cloudfoundry/bosh-agent/blobstore"
+	bosherr "github.com/cloudfoundry/bosh-agent/errors"
+	boshlog "github.com/cloudfoundry/bosh-agent/logger"
 )
 
 const blobstoreDownloaderLogTag = "BlobstoreDownloader"

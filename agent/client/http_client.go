@@ -9,11 +9,11 @@ import (
 	"strings"
 	"time"
 
-	boshaction "bosh/agent/action"
-	boshas "bosh/agent/applier/applyspec"
-	boshcomp "bosh/agent/compiler"
-	bosherr "bosh/errors"
-	boshlog "bosh/logger"
+	boshaction "github.com/cloudfoundry/bosh-agent/agent/action"
+	boshas "github.com/cloudfoundry/bosh-agent/agent/applier/applyspec"
+	boshcomp "github.com/cloudfoundry/bosh-agent/agent/compiler"
+	bosherr "github.com/cloudfoundry/bosh-agent/errors"
+	boshlog "github.com/cloudfoundry/bosh-agent/logger"
 )
 
 const httpClientLogTag = "HTTPClient"
@@ -80,7 +80,7 @@ func (ac HTTPClient) CancelTask(taskID string) (string, error) {
 	return ac.makeStringRequest(ac.quickRequest, "cancel_task", reqArgs{taskID})
 }
 
-func (ac HTTPClient) SSH(cmd string, params boshaction.SshParams) (map[string]interface{}, error) {
+func (ac HTTPClient) SSH(cmd string, params boshaction.SSHParams) (map[string]interface{}, error) {
 	val, err := ac.makeQuickRequest("ssh", reqArgs{cmd, params})
 	if err != nil {
 		return nil, bosherr.WrapError(err, "makeRequest")

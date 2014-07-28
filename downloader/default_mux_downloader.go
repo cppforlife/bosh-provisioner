@@ -1,9 +1,9 @@
 package downloader
 
 import (
-	boshblob "bosh/blobstore"
-	boshlog "bosh/logger"
-	boshsys "bosh/system"
+	boshblob "github.com/cloudfoundry/bosh-agent/blobstore"
+	boshlog "github.com/cloudfoundry/bosh-agent/logger"
+	boshsys "github.com/cloudfoundry/bosh-agent/system"
 )
 
 func NewDefaultMuxDownloader(

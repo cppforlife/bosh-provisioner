@@ -4,13 +4,13 @@ import (
 	"errors"
 	"time"
 
-	boshaction "bosh/agent/action"
-	boshlog "bosh/logger"
+	boshaction "github.com/cloudfoundry/bosh-agent/agent/action"
+	boshlog "github.com/cloudfoundry/bosh-agent/logger"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	fakebpagclient "boshprovisioner/agent/client/fakes"
-	. "boshprovisioner/instance/updater"
+	fakebpagclient "github.com/cppforlife/bosh-provisioner/agent/client/fakes"
+	. "github.com/cppforlife/bosh-provisioner/instance/updater"
 )
 
 var _ = Describe("Waiter", func() {

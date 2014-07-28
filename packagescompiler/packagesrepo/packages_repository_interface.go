@@ -1,7 +1,7 @@
 package packagesrepo
 
 import (
-	bprel "boshprovisioner/release"
+	bprel "github.com/cppforlife/bosh-provisioner/release"
 )
 
 type PackageRecord struct {

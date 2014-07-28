@@ -1,11 +1,11 @@
 package instance
 
 import (
-	bosherr "bosh/errors"
-	boshlog "bosh/logger"
+	bosherr "github.com/cloudfoundry/bosh-agent/errors"
+	boshlog "github.com/cloudfoundry/bosh-agent/logger"
 
-	bpdep "boshprovisioner/deployment"
-	bpinstupd "boshprovisioner/instance/updater"
+	bpdep "github.com/cppforlife/bosh-provisioner/deployment"
+	bpinstupd "github.com/cppforlife/bosh-provisioner/instance/updater"
 )
 
 const instanceLogTag = "Instance"

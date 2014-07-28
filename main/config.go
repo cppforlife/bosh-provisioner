@@ -3,11 +3,11 @@ package main
 import (
 	"encoding/json"
 
-	bosherr "bosh/errors"
-	boshsys "bosh/system"
+	bosherr "github.com/cloudfoundry/bosh-agent/errors"
+	boshsys "github.com/cloudfoundry/bosh-agent/system"
 
-	bpprov "boshprovisioner/provisioner"
-	bpvm "boshprovisioner/vm"
+	bpprov "github.com/cppforlife/bosh-provisioner/provisioner"
+	bpvm "github.com/cppforlife/bosh-provisioner/vm"
 )
 
 var DefaultWardenConfig = Config{

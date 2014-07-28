@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"reflect"
 
-	bosherr "bosh/errors"
-	boshsys "bosh/system"
+	bosherr "github.com/cloudfoundry/bosh-agent/errors"
+	boshsys "github.com/cloudfoundry/bosh-agent/system"
 )
 
 type FileIndex struct {

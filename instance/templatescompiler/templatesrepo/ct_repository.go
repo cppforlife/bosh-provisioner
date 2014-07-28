@@ -1,11 +1,11 @@
 package templatesrepo
 
 import (
-	bosherr "bosh/errors"
-	boshlog "bosh/logger"
+	bosherr "github.com/cloudfoundry/bosh-agent/errors"
+	boshlog "github.com/cloudfoundry/bosh-agent/logger"
 
-	bpdep "boshprovisioner/deployment"
-	bpindex "boshprovisioner/index"
+	bpdep "github.com/cppforlife/bosh-provisioner/deployment"
+	bpindex "github.com/cppforlife/bosh-provisioner/index"
 )
 
 type CTRepository struct {

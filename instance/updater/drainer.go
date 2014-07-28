@@ -4,12 +4,12 @@ import (
 	"math"
 	"time"
 
-	boshaction "bosh/agent/action"
-	boshas "bosh/agent/applier/applyspec"
-	bosherr "bosh/errors"
-	boshlog "bosh/logger"
+	boshaction "github.com/cloudfoundry/bosh-agent/agent/action"
+	boshas "github.com/cloudfoundry/bosh-agent/agent/applier/applyspec"
+	bosherr "github.com/cloudfoundry/bosh-agent/errors"
+	boshlog "github.com/cloudfoundry/bosh-agent/logger"
 
-	bpagclient "boshprovisioner/agent/client"
+	bpagclient "github.com/cppforlife/bosh-provisioner/agent/client"
 )
 
 const drainerLogTag = "Drainer"

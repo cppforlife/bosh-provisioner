@@ -1,12 +1,12 @@
 package main_test
 
 import (
-	fakesys "bosh/system/fakes"
+	fakesys "github.com/cloudfoundry/bosh-agent/system/fakes"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	. "boshprovisioner/main"
-	bpvm "boshprovisioner/vm"
+	. "github.com/cppforlife/bosh-provisioner/main"
+	bpvm "github.com/cppforlife/bosh-provisioner/vm"
 )
 
 var _ = Describe("NewConfigFromPath", func() {

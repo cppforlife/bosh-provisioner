@@ -1,13 +1,13 @@
 package packagescompiler
 
 import (
-	boshblob "bosh/blobstore"
-	boshlog "bosh/logger"
+	boshblob "github.com/cloudfoundry/bosh-agent/blobstore"
+	boshlog "github.com/cloudfoundry/bosh-agent/logger"
 
-	bpagclient "boshprovisioner/agent/client"
-	bpeventlog "boshprovisioner/eventlog"
-	bpcpkgsrepo "boshprovisioner/packagescompiler/compiledpackagesrepo"
-	bppkgsrepo "boshprovisioner/packagescompiler/packagesrepo"
+	bpagclient "github.com/cppforlife/bosh-provisioner/agent/client"
+	bpeventlog "github.com/cppforlife/bosh-provisioner/eventlog"
+	bpcpkgsrepo "github.com/cppforlife/bosh-provisioner/packagescompiler/compiledpackagesrepo"
+	bppkgsrepo "github.com/cppforlife/bosh-provisioner/packagescompiler/packagesrepo"
 )
 
 type ConcretePackagesCompilerFactory struct {

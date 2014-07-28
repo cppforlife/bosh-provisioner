@@ -1,13 +1,13 @@
 package applier
 
 import (
-	bosherr "bosh/errors"
-	boshlog "bosh/logger"
+	bosherr "github.com/cloudfoundry/bosh-agent/errors"
+	boshlog "github.com/cloudfoundry/bosh-agent/logger"
 
-	bpagclient "boshprovisioner/agent/client"
-	bpdep "boshprovisioner/deployment"
-	bptplcomp "boshprovisioner/instance/templatescompiler"
-	bppkgscomp "boshprovisioner/packagescompiler"
+	bpagclient "github.com/cppforlife/bosh-provisioner/agent/client"
+	bpdep "github.com/cppforlife/bosh-provisioner/deployment"
+	bptplcomp "github.com/cppforlife/bosh-provisioner/instance/templatescompiler"
+	bppkgscomp "github.com/cppforlife/bosh-provisioner/packagescompiler"
 )
 
 const applierLogTag = "Applier"

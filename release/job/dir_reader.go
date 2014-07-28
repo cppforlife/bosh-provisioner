@@ -3,11 +3,11 @@ package job
 import (
 	"path/filepath"
 
-	bosherr "bosh/errors"
-	boshlog "bosh/logger"
-	boshsys "bosh/system"
+	bosherr "github.com/cloudfoundry/bosh-agent/errors"
+	boshlog "github.com/cloudfoundry/bosh-agent/logger"
+	boshsys "github.com/cloudfoundry/bosh-agent/system"
 
-	bpjobrelman "boshprovisioner/release/job/manifest"
+	bpjobrelman "github.com/cppforlife/bosh-provisioner/release/job/manifest"
 )
 
 const dirReaderLogTag = "DirReader"

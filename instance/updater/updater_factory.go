@@ -4,14 +4,14 @@ import (
 	"fmt"
 	"time"
 
-	boshlog "bosh/logger"
+	boshlog "github.com/cloudfoundry/bosh-agent/logger"
 
-	bpagclient "boshprovisioner/agent/client"
-	bpdep "boshprovisioner/deployment"
-	bpeventlog "boshprovisioner/eventlog"
-	bptplcomp "boshprovisioner/instance/templatescompiler"
-	bpapplier "boshprovisioner/instance/updater/applier"
-	bppkgscomp "boshprovisioner/packagescompiler"
+	bpagclient "github.com/cppforlife/bosh-provisioner/agent/client"
+	bpdep "github.com/cppforlife/bosh-provisioner/deployment"
+	bpeventlog "github.com/cppforlife/bosh-provisioner/eventlog"
+	bptplcomp "github.com/cppforlife/bosh-provisioner/instance/templatescompiler"
+	bpapplier "github.com/cppforlife/bosh-provisioner/instance/updater/applier"
+	bppkgscomp "github.com/cppforlife/bosh-provisioner/packagescompiler"
 )
 
 type Factory struct {

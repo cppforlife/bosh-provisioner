@@ -3,8 +3,8 @@ package downloader
 import (
 	"strings"
 
-	bosherr "bosh/errors"
-	boshlog "bosh/logger"
+	bosherr "github.com/cloudfoundry/bosh-agent/errors"
+	boshlog "github.com/cloudfoundry/bosh-agent/logger"
 )
 
 const muxDownloaderLogTag = "Downloader"

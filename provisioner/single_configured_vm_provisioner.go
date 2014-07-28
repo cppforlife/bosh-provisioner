@@ -1,13 +1,13 @@
 package provisioner
 
 import (
-	bosherr "bosh/errors"
-	boshlog "bosh/logger"
+	bosherr "github.com/cloudfoundry/bosh-agent/errors"
+	boshlog "github.com/cloudfoundry/bosh-agent/logger"
 
-	bpdep "boshprovisioner/deployment"
-	bpeventlog "boshprovisioner/eventlog"
-	bpinstance "boshprovisioner/instance"
-	bpvm "boshprovisioner/vm"
+	bpdep "github.com/cppforlife/bosh-provisioner/deployment"
+	bpeventlog "github.com/cppforlife/bosh-provisioner/eventlog"
+	bpinstance "github.com/cppforlife/bosh-provisioner/instance"
+	bpvm "github.com/cppforlife/bosh-provisioner/vm"
 )
 
 // SingleConfiguredVMProvisioner interprets deployment manifest and

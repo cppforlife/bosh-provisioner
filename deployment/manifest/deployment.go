@@ -3,7 +3,7 @@ package manifest
 import (
 	"encoding/json"
 
-	bosherr "bosh/errors"
+	bosherr "github.com/cloudfoundry/bosh-agent/errors"
 )
 
 var (

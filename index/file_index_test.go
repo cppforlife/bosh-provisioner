@@ -1,12 +1,12 @@
 package index_test
 
 import (
-	boshlog "bosh/logger"
-	boshsys "bosh/system"
+	boshlog "github.com/cloudfoundry/bosh-agent/logger"
+	boshsys "github.com/cloudfoundry/bosh-agent/system"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	. "boshprovisioner/index"
+	. "github.com/cppforlife/bosh-provisioner/index"
 )
 
 type Key struct {

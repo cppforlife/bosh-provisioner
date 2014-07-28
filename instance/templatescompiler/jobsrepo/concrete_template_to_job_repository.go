@@ -1,12 +1,12 @@
 package jobsrepo
 
 import (
-	bosherr "bosh/errors"
-	boshlog "bosh/logger"
+	bosherr "github.com/cloudfoundry/bosh-agent/errors"
+	boshlog "github.com/cloudfoundry/bosh-agent/logger"
 
-	bpdep "boshprovisioner/deployment"
-	bpindex "boshprovisioner/index"
-	bprel "boshprovisioner/release"
+	bpdep "github.com/cppforlife/bosh-provisioner/deployment"
+	bpindex "github.com/cppforlife/bosh-provisioner/index"
+	bprel "github.com/cppforlife/bosh-provisioner/release"
 )
 
 type CTTJRepository struct {

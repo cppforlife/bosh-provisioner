@@ -1,7 +1,7 @@
 package job
 
 import (
-	bpreljobman "boshprovisioner/release/job/manifest"
+	bpreljobman "github.com/cppforlife/bosh-provisioner/release/job/manifest"
 )
 
 type Job struct {

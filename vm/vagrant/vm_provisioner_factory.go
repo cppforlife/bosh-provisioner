@@ -1,11 +1,11 @@
 package vagrant
 
 import (
-	boshlog "bosh/logger"
-	boshsys "bosh/system"
+	boshlog "github.com/cloudfoundry/bosh-agent/logger"
+	boshsys "github.com/cloudfoundry/bosh-agent/system"
 
-	bpeventlog "boshprovisioner/eventlog"
-	bpvm "boshprovisioner/vm"
+	bpeventlog "github.com/cppforlife/bosh-provisioner/eventlog"
+	bpvm "github.com/cppforlife/bosh-provisioner/vm"
 )
 
 type VMProvisionerFactory struct {

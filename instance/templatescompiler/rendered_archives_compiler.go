@@ -3,14 +3,14 @@ package templatescompiler
 import (
 	"path/filepath"
 
-	bosherr "bosh/errors"
-	boshlog "bosh/logger"
-	boshsys "bosh/system"
+	bosherr "github.com/cloudfoundry/bosh-agent/errors"
+	boshlog "github.com/cloudfoundry/bosh-agent/logger"
+	boshsys "github.com/cloudfoundry/bosh-agent/system"
 
-	bpdep "boshprovisioner/deployment"
-	bperb "boshprovisioner/instance/templatescompiler/erbrenderer"
-	bpreljob "boshprovisioner/release/job"
-	bptar "boshprovisioner/tar"
+	bpdep "github.com/cppforlife/bosh-provisioner/deployment"
+	bperb "github.com/cppforlife/bosh-provisioner/instance/templatescompiler/erbrenderer"
+	bpreljob "github.com/cppforlife/bosh-provisioner/release/job"
+	bptar "github.com/cppforlife/bosh-provisioner/tar"
 )
 
 type RenderedArchivesCompiler struct {

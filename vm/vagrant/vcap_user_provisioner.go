@@ -3,11 +3,11 @@ package vagrant
 import (
 	"strings"
 
-	bosherr "bosh/errors"
-	boshlog "bosh/logger"
-	boshsys "bosh/system"
+	bosherr "github.com/cloudfoundry/bosh-agent/errors"
+	boshlog "github.com/cloudfoundry/bosh-agent/logger"
+	boshsys "github.com/cloudfoundry/bosh-agent/system"
 
-	bpeventlog "boshprovisioner/eventlog"
+	bpeventlog "github.com/cppforlife/bosh-provisioner/eventlog"
 )
 
 const vcapUserProvisionerLogTag = "VCAPUserProvisioner"

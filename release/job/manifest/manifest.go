@@ -2,9 +2,9 @@
 package manifest
 
 import (
-	bosherr "bosh/errors"
-	boshsys "bosh/system"
 	"github.com/cloudfoundry-incubator/candiedyaml"
+	bosherr "github.com/cloudfoundry/bosh-agent/errors"
+	boshsys "github.com/cloudfoundry/bosh-agent/system"
 )
 
 type Manifest struct {

@@ -1,9 +1,9 @@
 package manifest
 
 import (
-	bosherr "bosh/errors"
+	bosherr "github.com/cloudfoundry/bosh-agent/errors"
 
-	bputil "boshprovisioner/util"
+	bputil "github.com/cppforlife/bosh-provisioner/util"
 )
 
 type SyntaxValidator struct {

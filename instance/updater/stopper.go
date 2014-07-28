@@ -1,10 +1,10 @@
 package updater
 
 import (
-	bosherr "bosh/errors"
-	boshlog "bosh/logger"
+	bosherr "github.com/cloudfoundry/bosh-agent/errors"
+	boshlog "github.com/cloudfoundry/bosh-agent/logger"
 
-	bpagclient "boshprovisioner/agent/client"
+	bpagclient "github.com/cppforlife/bosh-provisioner/agent/client"
 )
 
 const stopperLogTag = "Stopper"

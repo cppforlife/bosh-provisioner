@@ -1,7 +1,7 @@
 package deployment
 
 import (
-	bosherr "bosh/errors"
+	bosherr "github.com/cloudfoundry/bosh-agent/errors"
 )
 
 // SemanticValidator validates deployment to determine if it represents a meaningful state.

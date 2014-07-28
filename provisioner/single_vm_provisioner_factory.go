@@ -1,12 +1,12 @@
 package provisioner
 
 import (
-	boshlog "bosh/logger"
+	boshlog "github.com/cloudfoundry/bosh-agent/logger"
 
-	bpdep "boshprovisioner/deployment"
-	bpeventlog "boshprovisioner/eventlog"
-	bpinstance "boshprovisioner/instance"
-	bpvm "boshprovisioner/vm"
+	bpdep "github.com/cppforlife/bosh-provisioner/deployment"
+	bpeventlog "github.com/cppforlife/bosh-provisioner/eventlog"
+	bpinstance "github.com/cppforlife/bosh-provisioner/instance"
+	bpvm "github.com/cppforlife/bosh-provisioner/vm"
 )
 
 type SingleVMProvisionerFactory struct {

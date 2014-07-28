@@ -1,9 +1,9 @@
 package client
 
 import (
-	boshaction "bosh/agent/action"
-	boshas "bosh/agent/applier/applyspec"
-	boshcomp "bosh/agent/compiler"
+	boshaction "github.com/cloudfoundry/bosh-agent/agent/action"
+	boshas "github.com/cloudfoundry/bosh-agent/agent/applier/applyspec"
+	boshcomp "github.com/cloudfoundry/bosh-agent/agent/compiler"
 )
 
 type Client interface {
@@ -25,7 +25,7 @@ type TaskManager interface {
 // VMAdministrator provides administrative API for the agent
 // todo eliminate remaining param names
 type VMAdministrator interface {
-	SSH(cmd string, params boshaction.SshParams) (map[string]interface{}, error)
+	SSH(cmd string, params boshaction.SSHParams) (map[string]interface{}, error)
 	FetchLogs(logType string, filters []string) (map[string]interface{}, error)
 }
 

@@ -1,11 +1,11 @@
 package deployment
 
 import (
-	bosherr "bosh/errors"
-	boshlog "bosh/logger"
-	boshsys "bosh/system"
+	bosherr "github.com/cloudfoundry/bosh-agent/errors"
+	boshlog "github.com/cloudfoundry/bosh-agent/logger"
+	boshsys "github.com/cloudfoundry/bosh-agent/system"
 
-	bpdepman "boshprovisioner/deployment/manifest"
+	bpdepman "github.com/cppforlife/bosh-provisioner/deployment/manifest"
 )
 
 type ManifestReader struct {

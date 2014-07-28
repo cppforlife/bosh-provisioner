@@ -5,9 +5,9 @@ import (
 	"os"
 	"path/filepath"
 
-	bosherr "bosh/errors"
-	boshlog "bosh/logger"
-	boshsys "bosh/system"
+	bosherr "github.com/cloudfoundry/bosh-agent/errors"
+	boshlog "github.com/cloudfoundry/bosh-agent/logger"
+	boshsys "github.com/cloudfoundry/bosh-agent/system"
 )
 
 const erbRendererLogTag = "ERBRenderer"
