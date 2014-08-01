@@ -13,8 +13,9 @@ import (
 )
 
 const (
-	depsProvisionerLogTag          = "DepsProvisioner"
-	depsProvisionerAptGetUpdateMsg = "E: Unable to fetch some archives, maybe run apt-get update"
+	depsProvisionerLogTag            = "DepsProvisioner"
+	depsProvisionerUnableToFetchMsg  = "E: Unable to fetch some archives, maybe run apt-get update"
+	depsProvisionerUnableToLocateMsg = "E: Unable to locate package"
 )
 
 // DepsProvisioner installs basic dependencies for running
@@ -84,8 +85,11 @@ func (p DepsProvisioner) installPkg(name string) error {
 		return nil
 	}
 
+	unableToFetch := strings.Contains(err.Error(), depsProvisionerUnableToFetchMsg)
+	unableToLocate := strings.Contains(err.Error(), depsProvisionerUnableToLocateMsg)
+
 	// Avoid running 'apt-get update' since it usually takes 30sec
-	if strings.Contains(err.Error(), depsProvisionerAptGetUpdateMsg) {
+	if unableToFetch || unableToLocate {
 		_, _, _, err := p.runner.RunCommand("apt-get", "-y", "update")
 		if err != nil {
 			return bosherr.WrapError(err, "Updating sources")
