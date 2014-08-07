@@ -39,6 +39,10 @@ type Config struct {
 	// It will be created if it does not exist.
 	ReposDir string `json:"repos_dir"`
 
+	// Tmp dir is used instead of the main tmp directory.
+	// It will be created if it does not exist.
+	TmpDir string `json:"tmp_dir"`
+
 	Blobstore bpprov.BlobstoreConfig `json:"blobstore"`
 
 	VMProvisioner bpvm.ProvisionerConfig `json:"vm_provisioner"`
