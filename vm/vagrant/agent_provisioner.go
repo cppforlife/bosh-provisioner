@@ -16,7 +16,11 @@ import (
 	bpvm "github.com/cppforlife/bosh-provisioner/vm"
 )
 
-const agentProvisionerLogTag = "AgentProvisioner"
+const (
+	agentProvisionerLogTag        = "AgentProvisioner"
+	agentProvisionerRunitName     = "agent"
+	agentProvisionerRunitStopTime = 10 * time.Second
+)
 
 // AgentProvisioner places BOSH Agent and Monit onto machine
 // installing needed dependencies beforehand.
@@ -65,9 +69,24 @@ func NewAgentProvisioner(
 func (p AgentProvisioner) Provision() error {
 	stage := p.eventLog.BeginStage("Updating BOSH agent", 4)
 
+	// Deprovision possibly provisioned agent
+	// to avoid replacing running binaries on fs
+	err := p.runitProvisioner.Deprovision(
+		agentProvisionerRunitName,
+		agentProvisionerRunitStopTime,
+	)
+	if err != nil {
+		return bosherr.WrapError(err, "Deprovisioning agent with runit")
+	}
+
+	err = p.monitProvisioner.Deprovision()
+	if err != nil {
+		return bosherr.WrapError(err, "Deprovisioning monit")
+	}
+
 	task := stage.BeginTask("Placing binaries")
 
-	err := task.End(p.placeBinaries())
+	err = task.End(p.placeBinaries())
 	if err != nil {
 		return bosherr.WrapError(err, "Placing agent binaries")
 	}
@@ -88,7 +107,10 @@ func (p AgentProvisioner) Provision() error {
 
 	task = stage.BeginTask("Registering agent service")
 
-	err = task.End(p.runitProvisioner.Provision("agent", 10*time.Second))
+	err = task.End(p.runitProvisioner.Provision(
+		agentProvisionerRunitName,
+		agentProvisionerRunitStopTime,
+	))
 	if err != nil {
 		return bosherr.WrapError(err, "Provisioning agent with runit")
 	}

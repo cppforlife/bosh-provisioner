@@ -51,14 +51,46 @@ func NewRunitProvisioner(
 }
 
 func (p RunitProvisioner) Provision(name string, stopTimeout time.Duration) error {
+	p.logger.Info(runitProvisionerLogTag, "Provisioning %s service", name)
+
 	err := p.installRunit()
 	if err != nil {
 		return bosherr.WrapError(err, "Installing runit")
 	}
 
-	err = p.setUpService(name, stopTimeout)
+	servicePath, enableServicePath := p.buildServicePaths(name)
+
+	err = p.stopRunAndLog(servicePath, enableServicePath, name, stopTimeout)
 	if err != nil {
-		return bosherr.WrapError(err, "Setting up service")
+		return bosherr.WrapError(err, "Stopping run and log")
+	}
+
+	err = p.setUpRun(servicePath, name)
+	if err != nil {
+		return bosherr.WrapError(err, "Setting up run")
+	}
+
+	err = p.setUpLog(servicePath, name)
+	if err != nil {
+		return bosherr.WrapError(err, "Setting up log")
+	}
+
+	err = p.startRunAndLog(servicePath, enableServicePath, name)
+	if err != nil {
+		return bosherr.WrapError(err, "Starting run and log")
+	}
+
+	return nil
+}
+
+func (p RunitProvisioner) Deprovision(name string, stopTimeout time.Duration) error {
+	p.logger.Info(runitProvisionerLogTag, "Deprovisioning %s service", name)
+
+	servicePath, enableServicePath := p.buildServicePaths(name)
+
+	err := p.stopRunAndLog(servicePath, enableServicePath, name, stopTimeout)
+	if err != nil {
+		return bosherr.WrapError(err, "Stopping run and log")
 	}
 
 	return nil
@@ -86,37 +118,16 @@ func (p RunitProvisioner) installRunit() error {
 	return nil
 }
 
-func (p RunitProvisioner) setUpService(name string, stopTimeout time.Duration) error {
-	p.logger.Info(runitProvisionerLogTag, "Setting up %s service", name)
-
+func (p RunitProvisioner) buildServicePaths(name string) (string, string) {
 	servicePath := fmt.Sprintf("/etc/sv/%s", name)
 	enableServicePath := fmt.Sprintf("/etc/service/%s", name)
-
-	err := p.stopRunAndLog(servicePath, enableServicePath, name, stopTimeout)
-	if err != nil {
-		return bosherr.WrapError(err, "Stopping run and log")
-	}
-
-	err = p.setUpRun(servicePath, name)
-	if err != nil {
-		return bosherr.WrapError(err, "Setting up run")
-	}
-
-	err = p.setUpLog(servicePath, name)
-	if err != nil {
-		return bosherr.WrapError(err, "Setting up log")
-	}
-
-	err = p.startRunAndLog(servicePath, enableServicePath, name)
-	if err != nil {
-		return bosherr.WrapError(err, "Starting run and log")
-	}
-
-	return nil
+	return servicePath, enableServicePath
 }
 
 // setUpRun sets up script that runit will execute for the primary process
 func (p RunitProvisioner) setUpRun(servicePath, name string) error {
+	p.logger.Info(runitProvisionerLogTag, "Setting up %s run", name)
+
 	err := p.cmds.MkdirP(servicePath)
 	if err != nil {
 		return err
@@ -134,6 +145,8 @@ func (p RunitProvisioner) setUpRun(servicePath, name string) error {
 
 // setUpLog sets up logging destination for the service
 func (p RunitProvisioner) setUpLog(servicePath, name string) error {
+	p.logger.Info(runitProvisionerLogTag, "Setting up %s log", name)
+
 	logPath := fmt.Sprintf("%s/log", servicePath)
 
 	err := p.cmds.MkdirP(logPath)
@@ -173,6 +186,8 @@ func (p RunitProvisioner) setUpLog(servicePath, name string) error {
 }
 
 func (p RunitProvisioner) stopRunAndLog(servicePath, enableServicePath, name string, stopTimeout time.Duration) error {
+	p.logger.Info(runitProvisionerLogTag, "Stopping %s run", name)
+
 	err := p.stopRunsv(name, stopTimeout)
 	if err != nil {
 		return bosherr.WrapError(err, "Stopping service")
@@ -201,6 +216,11 @@ func (p RunitProvisioner) startRunAndLog(servicePath, enableServicePath, name st
 
 func (p RunitProvisioner) stopRunsv(name string, stopTimeout time.Duration) error {
 	p.logger.Info(runitProvisionerLogTag, "Stopping runsv")
+
+	// Potentially tried to deprovision before ever provisioning
+	if !p.runner.CommandExists("sv") {
+		return nil
+	}
 
 	downStdout, _, _, err := p.runner.RunCommand("sv", "down", name)
 	if err != nil {
