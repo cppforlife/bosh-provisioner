@@ -15,7 +15,7 @@ type Task struct {
 }
 
 func (t Task) Start() {
-	entry := logEntry{
+	entry := LogEntry{
 		Time: time.Now().Unix(),
 
 		Stage: t.stageName,
@@ -28,11 +28,11 @@ func (t Task) Start() {
 		Progress: 0,
 	}
 
-	t.log.writeLogEntryNoErr(entry)
+	t.log.WriteLogEntryNoErr(entry)
 }
 
 func (t Task) End(err error) error {
-	entry := logEntry{
+	entry := LogEntry{
 		Time: time.Now().Unix(),
 
 		Stage: t.stageName,
@@ -52,7 +52,7 @@ func (t Task) End(err error) error {
 		}
 	}
 
-	t.log.writeLogEntryNoErr(entry)
+	t.log.WriteLogEntryNoErr(entry)
 
 	return err
 }

@@ -224,7 +224,7 @@ func (p RunitProvisioner) stopRunsv(name string, stopTimeout time.Duration) erro
 
 	downStdout, _, _, err := p.runner.RunCommand("sv", "down", name)
 	if err != nil {
-		p.logger.Error(runitProvisionerLogTag, "Ignoring down error %s", err.Error())
+		p.logger.Error(runitProvisionerLogTag, "Ignoring down error %s", err)
 	}
 
 	// If runsv configuration does not exist, service was never started

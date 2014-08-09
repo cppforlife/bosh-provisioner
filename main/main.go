@@ -93,7 +93,9 @@ func main() {
 		logger,
 	)
 
-	eventLog := bpeventlog.NewLog(logger)
+	eventLogFactory := bpeventlog.NewFactory(config.EventLog, logger)
+
+	eventLog := eventLogFactory.NewLog()
 
 	packagesCompilerFactory := bppkgscomp.NewConcretePackagesCompilerFactory(
 		reposFactory.NewPackagesRepo(),

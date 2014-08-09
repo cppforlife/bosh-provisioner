@@ -1,22 +1,17 @@
 package eventlog
 
 import (
-	"encoding/json"
-	"io"
-	"os"
-
-	bosherr "github.com/cloudfoundry/bosh-agent/errors"
 	boshlog "github.com/cloudfoundry/bosh-agent/logger"
 )
 
 const logLogTag = "Log"
 
 type Log struct {
-	writer io.Writer
+	device Device
 	logger boshlog.Logger
 }
 
-type logEntry struct {
+type LogEntry struct {
 	Time int64 `json:"time"`
 
 	Stage string   `json:"stage"`
@@ -33,11 +28,8 @@ type logEntry struct {
 	Data map[string]interface{} `json:"data,omitempty"`
 }
 
-func NewLog(logger boshlog.Logger) Log {
-	return Log{
-		writer: os.Stdout,
-		logger: logger,
-	}
+func NewLog(device Device, logger boshlog.Logger) Log {
+	return Log{device: device, logger: logger}
 }
 
 func (l Log) BeginStage(name string, total int) *Stage {
@@ -48,25 +40,9 @@ func (l Log) BeginStage(name string, total int) *Stage {
 	}
 }
 
-func (l Log) writeLogEntryNoErr(entry logEntry) {
-	err := l.writeLogEntry(entry)
+func (l Log) WriteLogEntryNoErr(entry LogEntry) {
+	err := l.device.WriteLogEntry(entry)
 	if err != nil {
-		l.logger.Error(logLogTag, "Failed writing log entry %s", err.Error())
+		l.logger.Error(logLogTag, "Failed writing log entry %s", err)
 	}
-}
-
-func (l Log) writeLogEntry(entry logEntry) error {
-	bytes, err := json.Marshal(entry)
-	if err != nil {
-		return bosherr.WrapError(err, "Marshalling log entry")
-	}
-
-	bytes = append(bytes, []byte("\n")...)
-
-	_, err = l.writer.Write(bytes)
-	if err != nil {
-		return bosherr.WrapError(err, "Writing log entry")
-	}
-
-	return nil
 }
