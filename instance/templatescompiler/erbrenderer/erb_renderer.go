@@ -3,6 +3,7 @@ package erbrenderer
 import (
 	"encoding/json"
 	"os"
+	"strings"
 	"path/filepath"
 
 	bosherr "github.com/cloudfoundry/bosh-agent/errors"
@@ -101,17 +102,25 @@ func (r ERBRenderer) writeContext() (string, error) {
 }
 
 func (r ERBRenderer) determineRubyExePath() string {
-	// Prefer ruby executable on the PATH
-	if r.runner.CommandExists("ruby") {
-		return "ruby"
+	rubies := []string{
+		"ruby",
+		"/usr/bin/ruby1.9.3",
+		"/opt/vagrant_ruby/bin/ruby",
 	}
 
-	// Fallback to chef-solo ruby usually found in vagrant boxes
-	vagrantRuby := "/opt/vagrant_ruby/bin/ruby"
+	// ruby 1.8.7 fails with "no such file to load -- rubygems"
+	rubyCheck := "require 'rubygems'; puts 'works'"
 
-	if r.fs.FileExists(vagrantRuby) {
-		return vagrantRuby
+	for _, path := range rubies {
+		stdout, _, _, err := r.runner.RunCommand(path, "-e", rubyCheck)
+		if err != nil {
+			continue
+		}
+
+		if strings.Contains(stdout, "works") {
+			return path
+		}
 	}
 
-	return "ruby"
+	return rubies[0] // give up
 }

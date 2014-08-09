@@ -174,6 +174,9 @@ var depsProvisionerPkgsForMinimumStemcellCompatibility = []string{
 	"gettext",
 	"libreadline6-dev",
 	"libncurses5-dev",
+
+	// Needed to render job templates
+	"ruby1.9.3",
 }
 
 // Taken from base_apt stemcell builder stage
