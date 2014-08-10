@@ -47,6 +47,16 @@ func NewVMProvisionerFactory(
 func (f VMProvisionerFactory) NewVMProvisioner() *VMProvisioner {
 	cmds := NewSimpleCmds(f.runner, f.logger)
 
+	depsProvisionerFactory := NewDepsProvisionerFactory(
+		f.vmProvisionerConfig.FullStemcellCompatibility,
+		f.vmProvisionerConfig.AgentProvisioner.Platform,
+		f.runner,
+		f.eventLog,
+		f.logger,
+	)
+
+	depsProvisioner := depsProvisionerFactory.NewDepsProvisioner()
+
 	vcapUserProvisioner := NewVCAPUserProvisioner(
 		f.fs,
 		f.runner,
@@ -59,6 +69,7 @@ func (f VMProvisionerFactory) NewVMProvisioner() *VMProvisioner {
 	runitProvisioner := NewRunitProvisioner(
 		f.fs,
 		cmds,
+		depsProvisioner,
 		f.runner,
 		assetManager,
 		f.logger,
@@ -68,13 +79,6 @@ func (f VMProvisionerFactory) NewVMProvisioner() *VMProvisioner {
 		cmds,
 		assetManager,
 		runitProvisioner,
-		f.logger,
-	)
-
-	depsProvisioner := NewDepsProvisioner(
-		f.vmProvisionerConfig.FullStemcellCompatibility,
-		f.runner,
-		f.eventLog,
 		f.logger,
 	)
 

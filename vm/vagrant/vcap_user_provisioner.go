@@ -82,7 +82,7 @@ func (p VCAPUserProvisioner) setUpVcapUser() error {
 		{"bash", "-c", "echo 'vcap:c1oudc0w' | chpasswd"},
 		{"bash", "-c", "echo 'root:c1oudc0w' | chpasswd"},
 
-		{"usermod", "-G", "admin,adm,audio,cdrom,dialout,floppy,video,dip,plugdev", "vcap"},
+		{"usermod", "-G", "admin,adm,audio,cdrom,dialout,floppy,video,dip", "vcap"}, // todo plugdev
 		{"usermod", "-s", "/bin/bash", "vcap"},
 	}
 
@@ -126,18 +126,40 @@ func (p VCAPUserProvisioner) setUpBoshBinPath() error {
 }
 
 func (p VCAPUserProvisioner) configureLocales() error {
+	used, err := p.configureLocalesWithDpkg()
+	if used {
+		return err
+	}
+
+	return p.configureLocalesWithSysconfig()
+}
+
+func (p VCAPUserProvisioner) configureLocalesWithDpkg() (bool, error) {
+	if !p.runner.CommandExists("dpkg-reconfigure") {
+		return false, nil
+	}
+
 	_, _, _, err := p.runner.RunCommand("locale-gen", "en_US.UTF-8")
 	if err != nil {
-		return err
+		return true, err
 	}
 
 	_, _, _, err = p.runner.RunCommand("dpkg-reconfigure", "locales")
 	if err != nil {
-		return err
+		return true, err
 	}
 
 	// Configure vcap user locale (postgres initdb fails if mismatched)
-	return p.fs.WriteFileString("/etc/default/locale", "LANG=en_US.UTF-8\nLC_ALL=en_US.UTF-8")
+	return true, p.fs.WriteFileString("/etc/default/locale", "LANG=en_US.UTF-8\nLC_ALL=en_US.UTF-8")
+}
+
+func (p VCAPUserProvisioner) configureLocalesWithSysconfig() error {
+	err := p.fs.CopyFile("/usr/share/zoneinfo/UTC", "/etc/localtime")
+	if err != nil {
+		return err
+	}
+
+	return p.fs.WriteFileString("/etc/sysconfig/i18n", "LANG=\"en_US.UTF-8\"")
 }
 
 func (p VCAPUserProvisioner) hardenPermissinons() error {

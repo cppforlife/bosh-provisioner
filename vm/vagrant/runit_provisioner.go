@@ -24,36 +24,39 @@ var (
 	runitStatusDownRegex = regexp.MustCompile(`\Adown: [a-z\/]+: \d+`)
 )
 
-// RunitProvisioner installs runit via apt-get and
+// RunitProvisioner installs runit and
 // adds specified service under runit's control.
 type RunitProvisioner struct {
-	fs           boshsys.FileSystem
-	cmds         SimpleCmds
-	runner       boshsys.CmdRunner
-	assetManager AssetManager
-	logger       boshlog.Logger
+	fs              boshsys.FileSystem
+	cmds            SimpleCmds
+	depsProvisioner DepsProvisioner
+	runner          boshsys.CmdRunner
+	assetManager    AssetManager
+	logger          boshlog.Logger
 }
 
 func NewRunitProvisioner(
 	fs boshsys.FileSystem,
 	cmds SimpleCmds,
+	depsProvisioner DepsProvisioner,
 	runner boshsys.CmdRunner,
 	assetManager AssetManager,
 	logger boshlog.Logger,
 ) RunitProvisioner {
 	return RunitProvisioner{
-		fs:           fs,
-		cmds:         cmds,
-		runner:       runner,
-		assetManager: assetManager,
-		logger:       logger,
+		fs:              fs,
+		cmds:            cmds,
+		depsProvisioner: depsProvisioner,
+		runner:          runner,
+		assetManager:    assetManager,
+		logger:          logger,
 	}
 }
 
 func (p RunitProvisioner) Provision(name string, stopTimeout time.Duration) error {
 	p.logger.Info(runitProvisionerLogTag, "Provisioning %s service", name)
 
-	err := p.installRunit()
+	err := p.depsProvisioner.InstallRunit()
 	if err != nil {
 		return bosherr.WrapError(err, "Installing runit")
 	}
@@ -91,28 +94,6 @@ func (p RunitProvisioner) Deprovision(name string, stopTimeout time.Duration) er
 	err := p.stopRunAndLog(servicePath, enableServicePath, name, stopTimeout)
 	if err != nil {
 		return bosherr.WrapError(err, "Stopping run and log")
-	}
-
-	return nil
-}
-
-func (p RunitProvisioner) installRunit() error {
-	p.logger.Info(runitProvisionerLogTag, "Installing runit")
-
-	// todo non-bash
-	cmd := boshsys.Command{
-		Name: "bash",
-		Args: []string{
-			"-c", "apt-get -q -y -o Dpkg::Options::='--force-confdef' -o Dpkg::Options::='--force-confold' install runit",
-		},
-		Env: map[string]string{
-			"DEBIAN_FRONTEND": "noninteractive",
-		},
-	}
-
-	_, _, _, err := p.runner.RunComplexCommand(cmd)
-	if err != nil {
-		return err
 	}
 
 	return nil

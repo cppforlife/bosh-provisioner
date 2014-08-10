@@ -3,8 +3,8 @@ package erbrenderer
 import (
 	"encoding/json"
 	"os"
-	"strings"
 	"path/filepath"
+	"strings"
 
 	bosherr "github.com/cloudfoundry/bosh-agent/errors"
 	boshlog "github.com/cloudfoundry/bosh-agent/logger"
