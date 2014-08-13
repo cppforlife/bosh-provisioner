@@ -5,6 +5,7 @@ import (
 	"os"
 
 	boshblob "github.com/cloudfoundry/bosh-agent/blobstore"
+	bosherr "github.com/cloudfoundry/bosh-agent/errors"
 	boshlog "github.com/cloudfoundry/bosh-agent/logger"
 	boshsys "github.com/cloudfoundry/bosh-agent/system"
 	boshuuid "github.com/cloudfoundry/bosh-agent/uuid"
@@ -36,9 +37,13 @@ func main() {
 
 	config := mustLoadConfig(fs, logger)
 
-	mustSetTmpDir(config, fs, logger)
+	eventLogFactory := bpeventlog.NewFactory(config.EventLog, logger)
 
-	mustCreateReposDir(config, fs, logger)
+	eventLog := eventLogFactory.NewLog()
+
+	mustSetTmpDir(config, fs, eventLog)
+
+	mustCreateReposDir(config, fs, eventLog)
 
 	localBlobstore := boshblob.NewLocalBlobstore(
 		fs,
@@ -78,7 +83,7 @@ func main() {
 
 	err := blobstoreProvisioner.Provision()
 	if err != nil {
-		logger.Error(mainLogTag, "Failed to provision blobstore: %s", err)
+		eventLog.WriteErr(bosherr.WrapError(err, "Provisioning blobstore"))
 		os.Exit(1)
 	}
 
@@ -92,10 +97,6 @@ func main() {
 		blobstore,
 		logger,
 	)
-
-	eventLogFactory := bpeventlog.NewFactory(config.EventLog, logger)
-
-	eventLog := eventLogFactory.NewLog()
 
 	packagesCompilerFactory := bppkgscomp.NewConcretePackagesCompilerFactory(
 		reposFactory.NewPackagesRepo(),
@@ -161,7 +162,7 @@ func main() {
 
 	err = deploymentProvisioner.Provision()
 	if err != nil {
-		logger.Error(mainLogTag, "Failed to provision deployment: %s", err)
+		eventLog.WriteErr(bosherr.WrapError(err, "Provisioning deployment"))
 		os.Exit(1)
 	}
 }
@@ -190,7 +191,7 @@ func mustLoadConfig(fs boshsys.FileSystem, logger boshlog.Logger) Config {
 	return config
 }
 
-func mustSetTmpDir(config Config, fs boshsys.FileSystem, logger boshlog.Logger) {
+func mustSetTmpDir(config Config, fs boshsys.FileSystem, eventLog bpeventlog.Log) {
 	// todo leaky abstraction?
 	if len(config.TmpDir) == 0 {
 		return
@@ -198,21 +199,21 @@ func mustSetTmpDir(config Config, fs boshsys.FileSystem, logger boshlog.Logger) 
 
 	err := fs.MkdirAll(config.TmpDir, os.ModeDir)
 	if err != nil {
-		logger.Error(mainLogTag, "Failed to create tmp dir: %s", err)
+		eventLog.WriteErr(bosherr.WrapError(err, "Creating tmp dir"))
 		os.Exit(1)
 	}
 
 	err = os.Setenv("TMPDIR", config.TmpDir)
 	if err != nil {
-		logger.Error(mainLogTag, "Failed to set config %s", err)
+		eventLog.WriteErr(bosherr.WrapError(err, "Setting TMPDIR"))
 		os.Exit(1)
 	}
 }
 
-func mustCreateReposDir(config Config, fs boshsys.FileSystem, logger boshlog.Logger) {
+func mustCreateReposDir(config Config, fs boshsys.FileSystem, eventLog bpeventlog.Log) {
 	err := fs.MkdirAll(config.ReposDir, os.ModeDir)
 	if err != nil {
-		logger.Error(mainLogTag, "Failed to create repos dir: %s", err)
+		eventLog.WriteErr(bosherr.WrapError(err, "Creating repos dir"))
 		os.Exit(1)
 	}
 }

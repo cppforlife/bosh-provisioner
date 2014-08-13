@@ -1,6 +1,8 @@
 package eventlog
 
 import (
+	"time"
+
 	boshlog "github.com/cloudfoundry/bosh-agent/logger"
 )
 
@@ -28,6 +30,17 @@ type LogEntry struct {
 	Data map[string]interface{} `json:"data,omitempty"`
 }
 
+type ErrorEntry struct {
+	Time int64 `json:"time"`
+
+	Body ErrorEntryBody `json:"error"`
+}
+
+type ErrorEntryBody struct {
+	Code    int64  `json:"code"`
+	Message string `json:"message"`
+}
+
 func NewLog(device Device, logger boshlog.Logger) Log {
 	return Log{device: device, logger: logger}
 }
@@ -37,6 +50,24 @@ func (l Log) BeginStage(name string, total int) *Stage {
 		log:   l,
 		name:  name,
 		total: total,
+	}
+}
+
+func (l Log) WriteErr(err error) {
+	entry := ErrorEntry{
+		Time: time.Now().Unix(),
+
+		Body: ErrorEntryBody{
+			Code:    0,
+			Message: err.Error(),
+		},
+	}
+
+	l.logger.Error(logLogTag, "Error occurred: %s", err)
+
+	writeErr := l.device.WriteErrorEntry(entry)
+	if writeErr != nil {
+		l.logger.Error(logLogTag, "Failed writing error entry %s", writeErr)
 	}
 }
 

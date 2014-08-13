@@ -11,6 +11,7 @@ import (
 
 type Device interface {
 	WriteLogEntry(LogEntry) error
+	WriteErrorEntry(ErrorEntry) error
 }
 
 // JSONDevice writes events as JSON log entries
@@ -32,16 +33,24 @@ func NewTextDevice(writer io.Writer) TextDevice {
 }
 
 func (d JSONDevice) WriteLogEntry(entry LogEntry) error {
+	return d.writeEntry(entry)
+}
+
+func (d JSONDevice) WriteErrorEntry(entry ErrorEntry) error {
+	return d.writeEntry(entry)
+}
+
+func (d JSONDevice) writeEntry(entry interface{}) error {
 	bytes, err := json.Marshal(entry)
 	if err != nil {
-		return bosherr.WrapError(err, "Marshalling log entry")
+		return bosherr.WrapError(err, "Marshalling entry")
 	}
 
 	bytes = append(bytes, []byte("\n")...)
 
 	_, err = d.writer.Write(bytes)
 	if err != nil {
-		return bosherr.WrapError(err, "Writing log entry")
+		return bosherr.WrapError(err, "Writing entry")
 	}
 
 	return nil
@@ -57,6 +66,15 @@ func (d TextDevice) WriteLogEntry(entry LogEntry) error {
 	)
 	if err != nil {
 		return bosherr.WrapError(err, "Writing log entry")
+	}
+
+	return nil
+}
+
+func (d TextDevice) WriteErrorEntry(entry ErrorEntry) error {
+	_, err := fmt.Fprintf(d.writer, "\n-----\nError: %s\n------\n", entry.Body.Message)
+	if err != nil {
+		return bosherr.WrapError(err, "Writing error entry")
 	}
 
 	return nil
