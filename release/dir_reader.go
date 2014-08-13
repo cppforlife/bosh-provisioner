@@ -44,14 +44,24 @@ func (r DirReader) Read() (Release, error) {
 	// e.g. room101-0+dev.16.yml
 	manifestFileName := r.releaseName + "-" + r.releaseVersion + ".yml"
 
-	manifestPath := filepath.Join(r.dir, "dev_releases", manifestFileName)
+	// bosh_cli now places release manifests into sub-directories named after a release
+	oldManifestPath := filepath.Join(r.dir, "dev_releases", manifestFileName)
+	migratedManifestPath := filepath.Join(r.dir, "dev_releases", r.releaseName, manifestFileName)
+
+	manifestPath := r.pathThatExistsOrEmpty(oldManifestPath, migratedManifestPath)
+	if len(manifestPath) == 0 {
+		return release, bosherr.New(
+			"Manifest not found at '%s' or '%s'",
+			oldManifestPath,
+			migratedManifestPath,
+		)
+	}
 
 	manifest, err := bprelman.NewManifestFromPath(manifestPath, r.fs)
 	if err != nil {
 		closeErr := r.Close()
 		if closeErr != nil {
-			r.logger.Debug(dirReaderLogTag,
-				"Failed to close release %v", closeErr)
+			r.logger.Debug(dirReaderLogTag, "Failed to close release %v", closeErr)
 		}
 
 		return release, bosherr.WrapError(err, "Building manifest")
