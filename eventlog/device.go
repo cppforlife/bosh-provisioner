@@ -72,7 +72,7 @@ func (d TextDevice) WriteLogEntry(entry LogEntry) error {
 }
 
 func (d TextDevice) WriteErrorEntry(entry ErrorEntry) error {
-	_, err := fmt.Fprintf(d.writer, "\n-----\nError: %s\n------\n", entry.Body.Message)
+	_, err := fmt.Fprintf(d.writer, "\n-----\nError: %s\n-----\n", entry.Body.Message)
 	if err != nil {
 		return bosherr.WrapError(err, "Writing error entry")
 	}
