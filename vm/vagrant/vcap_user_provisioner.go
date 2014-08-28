@@ -1,6 +1,7 @@
 package vagrant
 
 import (
+	"fmt"
 	"strings"
 
 	bosherr "github.com/cloudfoundry/bosh-agent/errors"
@@ -95,10 +96,12 @@ func (p VCAPUserProvisioner) setUpVcapUser() error {
 
 	// todo setup vcap no-password sudo access
 
-	_, stderr, _, err = p.runner.RunCommand("usermod", "-a", "-G", "vcap", "vagrant")
-	if err != nil {
-		if !strings.Contains(stderr, "user 'vagrant' does not exist") {
-			return err
+	for _, user := range []string{"vagrant", "ubuntu"} {
+		_, stderr, _, err = p.runner.RunCommand("usermod", "-a", "-G", "vcap", user)
+		if err != nil {
+			if !strings.Contains(stderr, fmt.Sprintf("user '%s' does not exist", user)) {
+				return err
+			}
 		}
 	}
 
