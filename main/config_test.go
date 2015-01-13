@@ -53,9 +53,7 @@ var _ = Describe("NewConfigFromPath", func() {
 				Configuration: map[string]interface{}{
 					"Platform": map[string]interface{}{
 						"Linux": map[string]interface{}{
-							"UseDefaultTmpDir":              true,
-							"UsePreformattedPersistentDisk": true,
-							"BindMountPersistentDisk":       true,
+							"UseDefaultTmpDir": true,
 						},
 					},
 				},

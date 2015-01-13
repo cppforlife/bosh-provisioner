@@ -29,9 +29,7 @@ var (
 	DefaultAgentConfiguration = map[string]interface{}{
 		"Platform": map[string]interface{}{
 			"Linux": map[string]interface{}{
-				"UseDefaultTmpDir":              true,
-				"UsePreformattedPersistentDisk": true,
-				"BindMountPersistentDisk":       true,
+				"UseDefaultTmpDir": true,
 			},
 		},
 	}

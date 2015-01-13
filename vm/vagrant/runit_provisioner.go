@@ -22,6 +22,8 @@ var (
 
 	// Matches 'down: agent: 3s, normally up; run: log: (pid 15318) 7762s'
 	runitStatusDownRegex = regexp.MustCompile(`\Adown: [a-z\/]+: \d+`)
+
+	runitPossibleRunsvdirPaths = []string{"/usr/sbin/runsvdir-start", "/sbin/runsvdir-start"}
 )
 
 // RunitProvisioner installs runit and
@@ -189,9 +191,49 @@ func (p RunitProvisioner) stopRunAndLog(servicePath, enableServicePath, name str
 }
 
 func (p RunitProvisioner) startRunAndLog(servicePath, enableServicePath, name string) error {
+	if name == "monit" {
+		return p.configureMonitService(enableServicePath)
+	}
+
 	// Enabling service will kick in monitoring
 	_, _, _, err := p.runner.RunCommand("ln", "-sf", servicePath, enableServicePath)
+	return err
+}
 
+func (p RunitProvisioner) configureMonitService(enableServicePath string) error {
+	var runsvdirPath string
+
+	for _, path := range runitPossibleRunsvdirPaths {
+		if p.fs.FileExists(path) {
+			runsvdirPath = path
+		}
+	}
+
+	if len(runsvdirPath) == 0 {
+		return bosherr.New("Failed to find runsvdir-start binary")
+	}
+
+	runsvdirStr, err := p.fs.ReadFileString(runsvdirPath)
+	if err != nil {
+		return bosherr.WrapError(err, "Reading '%s'", runsvdirPath)
+	}
+
+	// Already checks sys/run directory; nothing to do
+	if strings.Contains(runsvdirStr, "/var/vcap/data/sys/run") {
+		return nil
+	}
+
+	// from https://github.com/cloudfoundry/bosh/blob/master/stemcell_builder/stages/delay_monit_start/apply.sh:
+	// > if /var/vcap/data/sys/run is not already mounted, the agent must not have been started yet
+	// > in that case remove /etc/services/monit in order to prevent runsvdir from starting monit
+	// > (the agent will do that during boostrapping).
+	sedScript := fmt.Sprintf(
+		"sed -i '2i if [ x`mount | grep -c /var/vcap/data/sys/run` = x0 ] ; then rm -f %s ; fi' %s",
+		enableServicePath,
+		runsvdirPath,
+	)
+
+	_, _, _, err = p.runner.RunCommand("bash", "-c", sedScript)
 	return err
 }
 
