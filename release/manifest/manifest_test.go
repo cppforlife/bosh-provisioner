@@ -43,13 +43,13 @@ jobs:
 			Expect(manifest.Release.Packages[0]).To(Equal(Package{
 				Name: "registry",
 
-				VersionRaw: "ZGQxYmEzMzBiYzQ0YjMxODFiMjYzMzgzYjhlNDI1MmQ3MDUxZGVjYQ==",
+				VersionRaw: "dd1ba330bc44b3181b263383b8e4252d7051deca",
 				Version:    "dd1ba330bc44b3181b263383b8e4252d7051deca",
 
-				FingerprintRaw: "ZGQxYmEzMzBiYzQ0YjMxODFiMjYzMzgzYjhlNDI1MmQ3MDUxZGVjYQ==",
+				FingerprintRaw: "dd1ba330bc44b3181b263383b8e4252d7051deca",
 				Fingerprint:    "dd1ba330bc44b3181b263383b8e4252d7051deca",
 
-				SHA1Raw: "NmVhYTZjOTYxZWFjN2JkOTk0ZDE2NDRhZDQwNWIzMzk1NDIwZWNhZg==",
+				SHA1Raw: "6eaa6c961eac7bd994d1644ad405b3395420ecaf",
 				SHA1:    "6eaa6c961eac7bd994d1644ad405b3395420ecaf",
 
 				DependencyNames: []DependencyName{},
@@ -58,13 +58,13 @@ jobs:
 			Expect(manifest.Release.Jobs[0]).To(Equal(Job{
 				Name: "powerdns",
 
-				VersionRaw: "MGI4MGIzYzE5OGJmN2FiYzZjODEyNjIwMTNkZTQ5NDM2OWZkMjViNg==",
+				VersionRaw: "0b80b3c198bf7abc6c81262013de494369fd25b6",
 				Version:    "0b80b3c198bf7abc6c81262013de494369fd25b6",
 
-				FingerprintRaw: "MGI4MGIzYzE5OGJmN2FiYzZjODEyNjIwMTNkZTQ5NDM2OWZkMjViNg==",
+				FingerprintRaw: "0b80b3c198bf7abc6c81262013de494369fd25b6",
 				Fingerprint:    "0b80b3c198bf7abc6c81262013de494369fd25b6",
 
-				SHA1Raw: "YWI5NzA5YmVhYjViZTBmYjYyYTJkMWYzYzg4ZDA2YzliNGJkZWM2NQ==",
+				SHA1Raw: "ab9709beab5be0fb62a2d1f3c88d06c9b4bdec65",
 				SHA1:    "ab9709beab5be0fb62a2d1f3c88d06c9b4bdec65",
 			}))
 		})

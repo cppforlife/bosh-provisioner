@@ -58,8 +58,7 @@ func (r *TarReader) Read() (Job, error) {
 	if err != nil {
 		cleanUpErr := r.downloader.CleanUp(r.downloadPath)
 		if cleanUpErr != nil {
-			r.logger.Debug(tarReaderLogTag,
-				"Failed to clean up downloaded job %v", cleanUpErr)
+			r.logger.Debug(tarReaderLogTag, "Failed to clean up downloaded job %v", cleanUpErr)
 		}
 
 		return job, bosherr.WrapError(err, "Extracting job")
@@ -73,8 +72,7 @@ func (r *TarReader) Read() (Job, error) {
 	if err != nil {
 		closeErr := r.Close()
 		if closeErr != nil {
-			r.logger.Debug(tarReaderLogTag,
-				"Failed to close job %v", closeErr)
+			r.logger.Debug(tarReaderLogTag, "Failed to close job %v", closeErr)
 		}
 
 		return job, bosherr.WrapError(err, "Building manifest")

@@ -293,4 +293,6 @@ var _ = Describe("FileIndex", func() {
 			Expect(values).To(Equal([]Value{v1}))
 		})
 	})
+
+	// todo locked methods
 })

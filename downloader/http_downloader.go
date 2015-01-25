@@ -24,12 +24,12 @@ func NewHTTPDownloader(
 }
 
 func (d HTTPDownloader) Download(url string) (string, error) {
-	file, err := d.fs.TempFile("release-Downloader-HTTPDownloader")
+	file, err := d.fs.TempFile("downloader-HTTPDownloader")
 	if err != nil {
 		return "", bosherr.WrapError(err, "Creating download destination")
 	}
 
-	d.logger.Debug(httpDownloaderLogTag, "Downloaded %s to %s", url, file.Name())
+	d.logger.Debug(httpDownloaderLogTag, "Planning to download '%s' to '%s'", url, file.Name())
 
 	defer file.Close()
 

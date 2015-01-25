@@ -39,5 +39,12 @@ func (v SyntaxValidator) validatePropDef(propDef PropertyDefinition) (PropertyDe
 
 	propDef.Default = def
 
+	ex, err := bputil.NewStringKeyed().ConvertInterface(propDef.ExampleRaw)
+	if err != nil {
+		return propDef, bosherr.WrapError(err, "Example")
+	}
+
+	propDef.Example = ex
+
 	return propDef, nil
 }

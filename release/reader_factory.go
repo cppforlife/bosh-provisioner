@@ -47,5 +47,9 @@ func (rf ReaderFactory) NewReader(name, version, url string) Reader {
 		return NewDirReader(name, version, dir, rf.fs, rf.logger)
 	}
 
+	return rf.NewTarReader(url)
+}
+
+func (rf ReaderFactory) NewTarReader(url string) Reader {
 	return NewTarReader(url, rf.downloader, rf.extractor, rf.fs, rf.logger)
 }

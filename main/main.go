@@ -53,7 +53,7 @@ func main() {
 
 	blobstore := boshblob.NewSHA1VerifiableBlobstore(localBlobstore)
 
-	downloader := bpdload.NewDefaultMuxDownloader(blobstore, fs, logger)
+	downloader := bpdload.NewDefaultMuxDownloader(fs, runner, blobstore, logger)
 
 	extractor := bptar.NewCmdExtractor(runner, fs, logger)
 

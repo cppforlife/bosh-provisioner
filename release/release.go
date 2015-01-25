@@ -5,10 +5,13 @@ import (
 )
 
 type Release struct {
-	Manifest bprelman.Manifest
+	Manifest bprelman.Manifest `json:"-"`
 
 	Name    string
 	Version string
+
+	CommitHash         string
+	UncommittedChanges bool
 
 	Jobs []Job
 
@@ -102,6 +105,9 @@ func (r *Release) populateFromManifest(manifest bprelman.Manifest) {
 func (r *Release) populateRelease(manRelease bprelman.Release) {
 	r.Name = manRelease.Name
 	r.Version = manRelease.Version
+
+	r.CommitHash = manRelease.CommitHash
+	r.UncommittedChanges = manRelease.UncommittedChanges
 }
 
 func (r *Release) populatePackages(manPkgs []bprelman.Package) {

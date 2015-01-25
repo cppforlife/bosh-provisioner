@@ -13,6 +13,11 @@ type FileIndex struct {
 	fs   boshsys.FileSystem
 }
 
+type fileIndexLockedRecord struct {
+	key       interface{}
+	fileIndex FileIndex
+}
+
 type indexEntry struct {
 	Key   map[string]interface{}
 	Value json.RawMessage
@@ -159,6 +164,20 @@ func (ri FileIndex) Remove(key interface{}) error {
 	}
 
 	return nil
+}
+
+func (ri FileIndex) FindLocked(key interface{}, value interface{}) (LockedRecord, error) {
+	return fileIndexLockedRecord{key: key, fileIndex: ri}, ri.Find(key, value)
+}
+
+func (ri fileIndexLockedRecord) Release() error { return nil }
+
+func (ri fileIndexLockedRecord) Save(value interface{}) error {
+	return ri.fileIndex.Save(ri.key, value)
+}
+
+func (ri fileIndexLockedRecord) Remove() error {
+	return ri.fileIndex.Remove(ri.key)
 }
 
 func (ri FileIndex) readRawEntries() ([]indexEntry, error) {

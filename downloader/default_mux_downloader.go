@@ -7,15 +7,23 @@ import (
 )
 
 func NewDefaultMuxDownloader(
-	blobstore boshblob.Blobstore,
 	fs boshsys.FileSystem,
+	runner boshsys.CmdRunner,
+	blobstore boshblob.Blobstore,
 	logger boshlog.Logger,
 ) MuxDownloader {
 	mux := map[string]Downloader{
-		"http":      NewHTTPDownloader(fs, logger),
-		"https":     NewHTTPDownloader(fs, logger),
-		"file":      NewLocalFSDownloader(fs, logger),
-		"blobstore": NewBlobstoreDownloader(blobstore, logger),
+		"http":  NewHTTPDownloader(fs, logger),
+		"https": NewHTTPDownloader(fs, logger),
+		"file":  NewLocalFSDownloader(fs, logger),
+	}
+
+	if runner != nil {
+		mux["git"] = NewGitDownloader(fs, runner, logger)
+	}
+
+	if blobstore != nil {
+		mux["blobstore"] = NewBlobstoreDownloader(blobstore, logger)
 	}
 
 	return NewMuxDownloader(mux, logger)

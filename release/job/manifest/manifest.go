@@ -12,7 +12,8 @@ type Manifest struct {
 }
 
 type Job struct {
-	Name string `yaml:"name"`
+	Name        string `yaml:"name"`
+	Description string `yaml:"description"`
 
 	TemplateNames TemplateNames `yaml:"templates"`
 
@@ -31,6 +32,10 @@ type PropertyDefinition struct {
 	// Non-raw field is populated by the validator.
 	DefaultRaw interface{} `yaml:"default"`
 	Default    interface{}
+
+	// Non-raw field is populated by the validator.
+	ExampleRaw interface{} `yaml:"example"`
+	Example    interface{}
 }
 
 func NewManifestFromPath(path string, fs boshsys.FileSystem) (Manifest, error) {
@@ -65,6 +70,8 @@ func NewManifestFromBytes(bytes []byte) (Manifest, error) {
 # Example for job.MF
 name: dummy
 
+description: ...
+
 templates:
   dummy_ctl: bin/dummy_ctl
 
@@ -76,4 +83,5 @@ properties:
   dummy_value:
     description: Some value for the dummy job
     default: 300
+    example: ...
 */

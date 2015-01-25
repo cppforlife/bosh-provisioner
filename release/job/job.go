@@ -5,9 +5,10 @@ import (
 )
 
 type Job struct {
-	Manifest bpreljobman.Manifest
+	Manifest bpreljobman.Manifest `json:"-"`
 
-	Name string
+	Name        string
+	Description string
 
 	MonitTemplate Template
 
@@ -35,6 +36,7 @@ type Property struct {
 	Description string
 
 	Default interface{}
+	Example interface{}
 }
 
 // populateFromManifest populates job information interpreted from job manifest.
@@ -48,6 +50,7 @@ func (j *Job) populateFromManifest(manifest bpreljobman.Manifest) {
 
 func (j *Job) populateJob(manJob bpreljobman.Job) {
 	j.Name = manJob.Name
+	j.Description = manJob.Description
 }
 
 func (j *Job) populateTemplates(manTemplateNames bpreljobman.TemplateNames) {
@@ -79,6 +82,7 @@ func (j *Job) populateProperties(manPropMappings bpreljobman.PropertyMappings) {
 			Description: propDef.Description,
 
 			Default: propDef.Default,
+			Example: propDef.Example,
 		}
 
 		j.Properties = append(j.Properties, property)
