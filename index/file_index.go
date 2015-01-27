@@ -224,7 +224,11 @@ func (ri FileIndex) structToMap(s interface{}) (map[string]interface{}, error) {
 	}
 
 	for i := 0; i < st.NumField(); i++ {
-		res[st.Field(i).Name] = stv.Field(i).Interface()
+		// Do not export private fields; private fields have PkgPath set.
+		// http://golang.org/pkg/reflect/#StructField
+		if st.Field(i).PkgPath == "" {
+			res[st.Field(i).Name] = stv.Field(i).Interface()
+		}
 	}
 
 	return res, nil
