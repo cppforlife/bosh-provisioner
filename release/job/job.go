@@ -1,6 +1,7 @@
 package job
 
 import (
+	bpdep "github.com/cppforlife/bosh-provisioner/deployment"
 	bpreljobman "github.com/cppforlife/bosh-provisioner/release/job/manifest"
 )
 
@@ -13,6 +14,8 @@ type Job struct {
 	MonitTemplate Template
 
 	Templates []Template
+
+	DeploymentJobTemplates []bpdep.Template
 
 	// Runtime package dependencies for this job
 	Packages []Package

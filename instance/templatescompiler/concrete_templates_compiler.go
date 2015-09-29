@@ -183,6 +183,7 @@ func (tc ConcreteTemplatesCompiler) compileJob(job bpdep.Job, instance bpdep.Ins
 		if err != nil {
 			return "", "", bosherr.WrapError(err, "Preparing runtime dep packages")
 		}
+		relJob.DeploymentJobTemplates = job.Templates
 
 		relJobs = append(relJobs, relJob)
 	}
