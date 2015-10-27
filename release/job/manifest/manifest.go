@@ -36,6 +36,16 @@ type PropertyDefinition struct {
 	// Non-raw field is populated by the validator.
 	ExampleRaw interface{} `yaml:"example"`
 	Example    interface{}
+
+	Examples []PropertyExampleDefinition `yaml:"examples"`
+}
+
+type PropertyExampleDefinition struct {
+	Description string
+
+	// Non-raw field is populated by the validator.
+	ValueRaw interface{} `yaml:"value"`
+	Value    interface{}
 }
 
 func NewManifestFromPath(path string, fs boshsys.FileSystem) (Manifest, error) {
@@ -84,4 +94,7 @@ properties:
     description: Some value for the dummy job
     default: 300
     example: ...
+    examples:
+    - description: Some description
+      value: ...
 */

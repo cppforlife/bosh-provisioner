@@ -36,7 +36,14 @@ type Property struct {
 	Description string
 
 	Default interface{}
-	Example interface{}
+
+	Example  interface{}
+	Examples []PropertyExample
+}
+
+type PropertyExample struct {
+	Description string
+	Value       interface{}
 }
 
 // populateFromManifest populates job information interpreted from job manifest.
@@ -82,7 +89,15 @@ func (j *Job) populateProperties(manPropMappings bpreljobman.PropertyMappings) {
 			Description: propDef.Description,
 
 			Default: propDef.Default,
+
 			Example: propDef.Example,
+		}
+
+		for _, propExDef := range propDef.Examples {
+			property.Examples = append(property.Examples, PropertyExample{
+				Description: propExDef.Description,
+				Value:       propExDef.Value,
+			})
 		}
 
 		j.Properties = append(j.Properties, property)
