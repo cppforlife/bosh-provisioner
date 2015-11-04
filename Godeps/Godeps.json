@@ -17,7 +17,7 @@
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry-incubator/candiedyaml",
-			"Rev": "9d6da703654a1d6897de218799c1ff4eccf49b85"
+			"Rev": "55a459c2d9da2b078f0725e5fb324823b2c71702"
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry/bosh-agent/agent/action",

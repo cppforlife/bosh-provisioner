@@ -1266,8 +1266,8 @@ func yaml_emitter_analyze_scalar(emitter *yaml_emitter_t, value []byte) bool {
 		return true
 	}
 
-	if (value[0] == '-' && value[1] == '-' && value[2] == '-') ||
-		(value[0] == '.' && value[1] == '.' && value[2] == '.') {
+	if len(value) >= 3 && ((value[0] == '-' && value[1] == '-' && value[2] == '-') ||
+		(value[0] == '.' && value[1] == '.' && value[2] == '.')) {
 		block_indicators = true
 		flow_indicators = true
 	}

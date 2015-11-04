@@ -20,6 +20,7 @@ import (
 	"io"
 	"math"
 	"reflect"
+	"regexp"
 	"sort"
 	"strconv"
 	"time"
@@ -29,10 +30,24 @@ var (
 	timeTimeType  = reflect.TypeOf(time.Time{})
 	marshalerType = reflect.TypeOf(new(Marshaler)).Elem()
 	numberType    = reflect.TypeOf(Number(""))
+	nonPrintable  = regexp.MustCompile("[^\t\n\r\u0020-\u007E\u0085\u00A0-\uD7FF\uE000-\uFFFD]")
+	multiline     = regexp.MustCompile("\n|\u0085|\u2028|\u2029")
+
+	shortTags = map[string]string{
+		yaml_NULL_TAG:      "!!null",
+		yaml_BOOL_TAG:      "!!bool",
+		yaml_STR_TAG:       "!!str",
+		yaml_INT_TAG:       "!!int",
+		yaml_FLOAT_TAG:     "!!float",
+		yaml_TIMESTAMP_TAG: "!!timestamp",
+		yaml_SEQ_TAG:       "!!seq",
+		yaml_MAP_TAG:       "!!map",
+		yaml_BINARY_TAG:    "!!binary",
+	}
 )
 
 type Marshaler interface {
-	MarshalYAML() (tag string, value interface{})
+	MarshalYAML() (tag string, value interface{}, err error)
 }
 
 // An Encoder writes JSON objects to an output stream.
@@ -245,14 +260,17 @@ func (e *Encoder) emitBase64(tag string, v reflect.Value) {
 	dst := make([]byte, base64.StdEncoding.EncodedLen(len(s)))
 
 	base64.StdEncoding.Encode(dst, s)
-	e.emitScalar(string(dst), "", "!!binary", yaml_DOUBLE_QUOTED_SCALAR_STYLE)
+	e.emitScalar(string(dst), "", yaml_BINARY_TAG, yaml_DOUBLE_QUOTED_SCALAR_STYLE)
 }
 
 func (e *Encoder) emitString(tag string, v reflect.Value) {
 	var style yaml_scalar_style_t
 	s := v.String()
 
-	style = yaml_DOUBLE_QUOTED_SCALAR_STYLE
+	if nonPrintable.MatchString(s) {
+		e.emitBase64(tag, v)
+		return
+	}
 
 	if v.Type() == numberType {
 		style = yaml_PLAIN_SCALAR_STYLE
@@ -261,7 +279,13 @@ func (e *Encoder) emitString(tag string, v reflect.Value) {
 			implicit: true,
 			value:    []byte(s),
 		}
-		if tag, _ := resolveInterface(event, false); tag == "!!str" {
+
+		rtag, _ := resolveInterface(event, false)
+		if tag == "" && rtag != yaml_STR_TAG {
+			style = yaml_DOUBLE_QUOTED_SCALAR_STYLE
+		} else if multiline.MatchString(s) {
+			style = yaml_LITERAL_SCALAR_STYLE
+		} else {
 			style = yaml_PLAIN_SCALAR_STYLE
 		}
 	}
@@ -311,7 +335,13 @@ func (e *Encoder) emitScalar(value, anchor, tag string, style yaml_scalar_style_
 	if !implicit {
 		style = yaml_PLAIN_SCALAR_STYLE
 	}
-	yaml_scalar_event_initialize(&e.event, []byte(anchor), []byte(tag), []byte(value), implicit, implicit, style)
+
+	stag := shortTags[tag]
+	if stag == "" {
+		stag = tag
+	}
+
+	yaml_scalar_event_initialize(&e.event, []byte(anchor), []byte(stag), []byte(value), implicit, implicit, style)
 	e.emit()
 }
 
@@ -326,7 +356,10 @@ func (e *Encoder) emitMarshaler(tag string, v reflect.Value) {
 		e.emitNil()
 		return
 	}
-	t, val := m.MarshalYAML()
+	t, val, err := m.MarshalYAML()
+	if err != nil {
+		panic(err)
+	}
 	if val == nil {
 		e.emitNil()
 		return
@@ -348,7 +381,11 @@ func (e *Encoder) emitAddrMarshaler(tag string, v reflect.Value) {
 	}
 
 	m := v.Interface().(Marshaler)
-	t, val := m.MarshalYAML()
+	t, val, err := m.MarshalYAML()
+	if err != nil {
+		panic(err)
+	}
+
 	if val == nil {
 		e.emitNil()
 		return
