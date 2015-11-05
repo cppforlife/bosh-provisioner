@@ -6,6 +6,7 @@ require "rubygems"
 require "ostruct"
 require "json"
 require "erb"
+require "yaml"
 
 class TemplateEvaluationContext
   attr_reader :name, :index
