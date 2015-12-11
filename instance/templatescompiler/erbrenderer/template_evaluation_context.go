@@ -30,6 +30,11 @@ type rootContext struct {
 }
 
 type jobContext struct {
+	Name      string            `json:"name"`
+	Templates []templateContext `json:"templates"`
+}
+
+type templateContext struct {
 	Name string `json:"name"`
 }
 
@@ -58,7 +63,7 @@ func (c TemplateEvaluationContext) MarshalJSON() ([]byte, error) {
 
 	context := rootContext{
 		Index:      c.instance.Index,
-		JobContext: jobContext{Name: c.instance.JobName},
+		JobContext: jobContext{Name: c.instance.JobName, Templates: c.buildTemplates()},
 		Deployment: c.instance.DeploymentName,
 
 		NetworkContexts: c.buildNetworkContexts(),
@@ -66,6 +71,14 @@ func (c TemplateEvaluationContext) MarshalJSON() ([]byte, error) {
 	}
 
 	return json.Marshal(context)
+}
+
+func (c TemplateEvaluationContext) buildTemplates() []templateContext {
+	var templates []templateContext
+	for _, template := range c.relJob.DeploymentJobTemplates {
+		templates = append(templates, templateContext{Name: template.Name})
+	}
+	return templates
 }
 
 func (c TemplateEvaluationContext) buildNetworkContexts() map[string]networkContext {
