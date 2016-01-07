@@ -7,6 +7,8 @@ require "ostruct"
 require "json"
 require "erb"
 require "yaml"
+require "shellwords"
+require "uri"
 
 class TemplateEvaluationContext
   attr_reader :name, :index
