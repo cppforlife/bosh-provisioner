@@ -4,9 +4,9 @@ import (
 	"fmt"
 
 	boshcomp "github.com/cloudfoundry/bosh-agent/agent/compiler"
-	boshblob "github.com/cloudfoundry/bosh-agent/blobstore"
-	bosherr "github.com/cloudfoundry/bosh-agent/errors"
-	boshlog "github.com/cloudfoundry/bosh-agent/logger"
+	boshblob "github.com/cloudfoundry/bosh-utils/blobstore"
+	bosherr "github.com/cloudfoundry/bosh-utils/errors"
+	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 
 	bpagentclient "github.com/cppforlife/bosh-provisioner/agent/client"
 	bpeventlog "github.com/cppforlife/bosh-provisioner/eventlog"

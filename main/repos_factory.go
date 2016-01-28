@@ -3,9 +3,9 @@ package main
 import (
 	"path/filepath"
 
-	boshblob "github.com/cloudfoundry/bosh-agent/blobstore"
-	boshlog "github.com/cloudfoundry/bosh-agent/logger"
-	boshsys "github.com/cloudfoundry/bosh-agent/system"
+	boshblob "github.com/cloudfoundry/bosh-utils/blobstore"
+	boshlog "github.com/cloudfoundry/bosh-utils/logger"
+	boshsys "github.com/cloudfoundry/bosh-utils/system"
 
 	bpdload "github.com/cppforlife/bosh-provisioner/downloader"
 	bpindex "github.com/cppforlife/bosh-provisioner/index"

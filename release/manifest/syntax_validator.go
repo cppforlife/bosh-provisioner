@@ -1,7 +1,7 @@
 package manifest
 
 import (
-	bosherr "github.com/cloudfoundry/bosh-agent/errors"
+	bosherr "github.com/cloudfoundry/bosh-utils/errors"
 
 	bputil "github.com/cppforlife/bosh-provisioner/util"
 )

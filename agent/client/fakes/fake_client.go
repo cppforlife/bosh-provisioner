@@ -4,7 +4,7 @@ import (
 	boshaction "github.com/cloudfoundry/bosh-agent/agent/action"
 	boshas "github.com/cloudfoundry/bosh-agent/agent/applier/applyspec"
 	boshcomp "github.com/cloudfoundry/bosh-agent/agent/compiler"
-	bosherr "github.com/cloudfoundry/bosh-agent/errors"
+	bosherr "github.com/cloudfoundry/bosh-utils/errors"
 
 	bpagclient "github.com/cppforlife/bosh-provisioner/agent/client"
 )

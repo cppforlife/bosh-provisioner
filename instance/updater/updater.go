@@ -3,8 +3,8 @@ package updater
 import (
 	"fmt"
 
-	bosherr "github.com/cloudfoundry/bosh-agent/errors"
-	boshlog "github.com/cloudfoundry/bosh-agent/logger"
+	bosherr "github.com/cloudfoundry/bosh-utils/errors"
+	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 
 	bpeventlog "github.com/cppforlife/bosh-provisioner/eventlog"
 	bpapplier "github.com/cppforlife/bosh-provisioner/instance/updater/applier"

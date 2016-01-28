@@ -2,7 +2,7 @@ package applier
 
 import (
 	boshas "github.com/cloudfoundry/bosh-agent/agent/applier/applyspec"
-	bosherr "github.com/cloudfoundry/bosh-agent/errors"
+	bosherr "github.com/cloudfoundry/bosh-utils/errors"
 
 	bpdep "github.com/cppforlife/bosh-provisioner/deployment"
 	bptplcomp "github.com/cppforlife/bosh-provisioner/instance/templatescompiler"

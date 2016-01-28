@@ -3,8 +3,8 @@ package main
 import (
 	"encoding/json"
 
-	bosherr "github.com/cloudfoundry/bosh-agent/errors"
-	boshsys "github.com/cloudfoundry/bosh-agent/system"
+	bosherr "github.com/cloudfoundry/bosh-utils/errors"
+	boshsys "github.com/cloudfoundry/bosh-utils/system"
 
 	bpeventlog "github.com/cppforlife/bosh-provisioner/eventlog"
 	bpprov "github.com/cppforlife/bosh-provisioner/provisioner"
