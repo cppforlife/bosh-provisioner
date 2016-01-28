@@ -9,8 +9,8 @@ import (
 )
 
 var (
-	ErrAlreadyProvisioned = bosherr.New("Vagrant VM is already provisioned")
-	ErrNotProvisioned     = bosherr.New("Vagrant VM is not provisioned")
+	ErrAlreadyProvisioned = bosherr.Error("Vagrant VM is already provisioned")
+	ErrNotProvisioned     = bosherr.Error("Vagrant VM is not provisioned")
 )
 
 // VMProvisioner installs system dependencies that are usually

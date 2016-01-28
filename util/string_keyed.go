@@ -17,7 +17,7 @@ func (sk stringKeyed) ConvertMap(m map[interface{}]interface{}) (map[string]inte
 	for name, val := range m {
 		nameStr, ok := name.(string)
 		if !ok {
-			return result, bosherr.New("Map contains non-string key %v", name)
+			return result, bosherr.Errorf("Map contains non-string key %v", name)
 		}
 
 		convertedVal, err := sk.ConvertInterface(val)
@@ -40,7 +40,7 @@ func (sk stringKeyed) ConvertInterface(val interface{}) (interface{}, error) {
 	case reflect.Map:
 		valMap, ok := val.(map[interface{}]interface{})
 		if !ok {
-			return nil, bosherr.New("Converting map %v", val)
+			return nil, bosherr.Errorf("Converting map %v", val)
 		}
 
 		return sk.ConvertMap(valMap)
@@ -48,7 +48,7 @@ func (sk stringKeyed) ConvertInterface(val interface{}) (interface{}, error) {
 	case reflect.Slice:
 		valSlice, ok := val.([]interface{})
 		if !ok {
-			return nil, bosherr.New("Converting slice %v", val)
+			return nil, bosherr.Errorf("Converting slice %v", val)
 		}
 
 		slice := make([]interface{}, len(valSlice))

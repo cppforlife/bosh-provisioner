@@ -51,7 +51,7 @@ type PropertyExampleDefinition struct {
 func NewManifestFromPath(path string, fs boshsys.FileSystem) (Manifest, error) {
 	bytes, err := fs.ReadFile(path)
 	if err != nil {
-		return Manifest{}, bosherr.WrapError(err, "Reading manifest %s", path)
+		return Manifest{}, bosherr.WrapErrorf(err, "Reading manifest %s", path)
 	}
 
 	return NewManifestFromBytes(bytes)

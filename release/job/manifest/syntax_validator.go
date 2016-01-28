@@ -22,7 +22,7 @@ func (v SyntaxValidator) Validate() error {
 	for name, propDef := range v.job.PropertyMappings {
 		propDef, err := v.validatePropDef(propDef)
 		if err != nil {
-			return bosherr.WrapError(err, "Property %s", name)
+			return bosherr.WrapErrorf(err, "Property %s", name)
 		}
 
 		v.job.PropertyMappings[name] = propDef
@@ -49,7 +49,7 @@ func (v SyntaxValidator) validatePropDef(propDef PropertyDefinition) (PropertyDe
 	for i, propExDef := range propDef.Examples {
 		val, err := bputil.NewStringKeyed().ConvertInterface(propExDef.ValueRaw)
 		if err != nil {
-			return propDef, bosherr.WrapError(err, "Example[%d]", i)
+			return propDef, bosherr.WrapErrorf(err, "Example[%d]", i)
 		}
 
 		propDef.Examples[i].Value = val

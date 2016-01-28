@@ -60,7 +60,7 @@ func (p ReleaseCompiler) Compile(instance bpdep.Instance, depReleases []bpdep.Re
 	for _, depRelease := range depReleases {
 		err := p.compileRelease(pkgsCompiler, depRelease)
 		if err != nil {
-			return bosherr.WrapError(err, "Release %s", depRelease.Name)
+			return bosherr.WrapErrorf(err, "Release %s", depRelease.Name)
 		}
 	}
 

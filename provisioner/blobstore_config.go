@@ -41,16 +41,16 @@ func (c BlobstoreConfig) LocalPath() string {
 func (c BlobstoreConfig) extractLocalPath() (string, error) {
 	path, ok := c.Options["blobstore_path"]
 	if !ok {
-		return "", bosherr.New("Missing blobstore_path in options")
+		return "", bosherr.Error("Missing blobstore_path in options")
 	}
 
 	pathStr, ok := path.(string)
 	if !ok {
-		return "", bosherr.New("Must provide blobstore_path as a string")
+		return "", bosherr.Error("Must provide blobstore_path as a string")
 	}
 
 	if pathStr == "" {
-		return "", bosherr.New("Must provide non-empty blobstore_path in options")
+		return "", bosherr.Error("Must provide non-empty blobstore_path in options")
 	}
 
 	return pathStr, nil

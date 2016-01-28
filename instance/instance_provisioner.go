@@ -33,7 +33,7 @@ func (p Provisioner) Provision(ac bpagclient.Client, job bpdep.Job, depInstance 
 
 	err := updater.SetUp()
 	if err != nil {
-		return Instance{}, bosherr.WrapError(err, "Updating instance %d", depInstance.Index)
+		return Instance{}, bosherr.WrapErrorf(err, "Updating instance %d", depInstance.Index)
 	}
 
 	return NewInstance(updater, job, depInstance, p.logger), nil

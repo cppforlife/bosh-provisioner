@@ -210,12 +210,12 @@ func (p RunitProvisioner) configureMonitService(enableServicePath string) error 
 	}
 
 	if len(runsvdirPath) == 0 {
-		return bosherr.New("Failed to find runsvdir-start binary")
+		return bosherr.Error("Failed to find runsvdir-start binary")
 	}
 
 	runsvdirStr, err := p.fs.ReadFileString(runsvdirPath)
 	if err != nil {
-		return bosherr.WrapError(err, "Reading '%s'", runsvdirPath)
+		return bosherr.WrapErrorf(err, "Reading '%s'", runsvdirPath)
 	}
 
 	// Already checks sys/run directory; nothing to do
@@ -268,5 +268,5 @@ func (p RunitProvisioner) stopRunsv(name string, stopTimeout time.Duration) erro
 		time.Sleep(runitStopStepDuration)
 	}
 
-	return bosherr.New("Failed to stop runsv for %s. Output: %s", name, lastStatusStdout)
+	return bosherr.Errorf("Failed to stop runsv for %s. Output: %s", name, lastStatusStdout)
 }

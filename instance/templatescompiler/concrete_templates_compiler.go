@@ -58,7 +58,7 @@ func (tc ConcreteTemplatesCompiler) Precompile(release bprel.Release) error {
 	for _, pkg := range release.Packages {
 		if pkg == nil {
 			// todo panic or should not be here?
-			return bosherr.New("Expected release to not have nil package")
+			return bosherr.Error("Expected release to not have nil package")
 		}
 
 		allPkgs = append(allPkgs, *pkg)
@@ -67,13 +67,13 @@ func (tc ConcreteTemplatesCompiler) Precompile(release bprel.Release) error {
 	for _, job := range release.Jobs {
 		jobRec, found, err := tc.jobsRepo.Find(job)
 		if err != nil {
-			return bosherr.WrapError(err, "Finding job source blob %s", job.Name)
+			return bosherr.WrapErrorf(err, "Finding job source blob %s", job.Name)
 		}
 
 		if !found {
 			blobID, fingerprint, err := tc.blobstore.Create(job.TarPath)
 			if err != nil {
-				return bosherr.WrapError(err, "Creating job source blob %s", job.Name)
+				return bosherr.WrapErrorf(err, "Creating job source blob %s", job.Name)
 			}
 
 			jobRec = bpjobsrepo.JobRecord{
@@ -83,19 +83,19 @@ func (tc ConcreteTemplatesCompiler) Precompile(release bprel.Release) error {
 
 			err = tc.jobsRepo.Save(job, jobRec)
 			if err != nil {
-				return bosherr.WrapError(err, "Saving job record %s", job.Name)
+				return bosherr.WrapErrorf(err, "Saving job record %s", job.Name)
 			}
 		}
 
 		releaseJobRec, err := tc.tplToJobRepo.SaveForJob(release, job)
 		if err != nil {
-			return bosherr.WrapError(err, "Saving release job %s", job.Name)
+			return bosherr.WrapErrorf(err, "Saving release job %s", job.Name)
 		}
 
 		// todo associate to release instead
 		err = tc.runPkgsRepo.SaveAll(releaseJobRec, allPkgs)
 		if err != nil {
-			return bosherr.WrapError(err, "Saving release job %s", job.Name)
+			return bosherr.WrapErrorf(err, "Saving release job %s", job.Name)
 		}
 	}
 
@@ -116,7 +116,7 @@ func (tc ConcreteTemplatesCompiler) Compile(job bpdep.Job, instance bpdep.Instan
 
 	err = tc.templatesRepo.Save(job, instance, templateRec)
 	if err != nil {
-		return bosherr.WrapError(err, "Saving compiled templates record %s", job.Name)
+		return bosherr.WrapErrorf(err, "Saving compiled templates record %s", job.Name)
 	}
 
 	return nil
@@ -129,16 +129,16 @@ func (tc ConcreteTemplatesCompiler) FindPackages(template bpdep.Template) ([]bpr
 
 	releaseJobRec, found, err := tc.tplToJobRepo.FindByTemplate(template)
 	if err != nil {
-		return pkgs, bosherr.WrapError(err, "Finding release job record by template %s", template.Name)
+		return pkgs, bosherr.WrapErrorf(err, "Finding release job record by template %s", template.Name)
 	} else if !found {
-		return pkgs, bosherr.New("Expected to find release job record by template %s", template.Name)
+		return pkgs, bosherr.Errorf("Expected to find release job record by template %s", template.Name)
 	}
 
 	pkgs, found, err = tc.runPkgsRepo.Find(releaseJobRec)
 	if err != nil {
-		return pkgs, bosherr.WrapError(err, "Finding packages by release job record %v", releaseJobRec)
+		return pkgs, bosherr.WrapErrorf(err, "Finding packages by release job record %v", releaseJobRec)
 	} else if !found {
-		return pkgs, bosherr.New("Expected to find packages by release job record %v", releaseJobRec)
+		return pkgs, bosherr.Errorf("Expected to find packages by release job record %v", releaseJobRec)
 	}
 
 	return pkgs, nil
@@ -151,9 +151,9 @@ func (tc ConcreteTemplatesCompiler) FindRenderedArchive(job bpdep.Job, instance 
 
 	rec, found, err := tc.templatesRepo.Find(job, instance)
 	if err != nil {
-		return renderedArchiveRec, bosherr.WrapError(err, "Finding compiled templates %s", job.Name)
+		return renderedArchiveRec, bosherr.WrapErrorf(err, "Finding compiled templates %s", job.Name)
 	} else if !found {
-		return renderedArchiveRec, bosherr.New("Expected to find compiled templates %s", job.Name)
+		return renderedArchiveRec, bosherr.Errorf("Expected to find compiled templates %s", job.Name)
 	}
 
 	renderedArchiveRec.SHA1 = rec.SHA1
@@ -214,16 +214,16 @@ func (tc ConcreteTemplatesCompiler) buildJobReaders(job bpdep.Job) ([]jobReader,
 	for _, template := range job.Templates {
 		rec, found, err := tc.tplToJobRepo.FindByTemplate(template)
 		if err != nil {
-			return readers, bosherr.WrapError(err, "Finding dep-template -> release-job record %s", template.Name)
+			return readers, bosherr.WrapErrorf(err, "Finding dep-template -> release-job record %s", template.Name)
 		} else if !found {
-			return readers, bosherr.New("Expected to find dep-template -> release-job record %s", template.Name)
+			return readers, bosherr.Errorf("Expected to find dep-template -> release-job record %s", template.Name)
 		}
 
 		jobRec, found, err := tc.jobsRepo.FindByReleaseJob(rec)
 		if err != nil {
-			return readers, bosherr.WrapError(err, "Finding job source blob %s", template.Name)
+			return readers, bosherr.WrapErrorf(err, "Finding job source blob %s", template.Name)
 		} else if !found {
-			return readers, bosherr.New("Expected to find job source blob %s -- %s", template.Name, rec)
+			return readers, bosherr.Errorf("Expected to find job source blob %s -- %s", template.Name, rec)
 		}
 
 		jobURL := fmt.Sprintf("blobstore:///%s?fingerprint=%s", jobRec.BlobID, jobRec.SHA1)
@@ -242,7 +242,7 @@ func (tc ConcreteTemplatesCompiler) buildJobReaders(job bpdep.Job) ([]jobReader,
 func (tc ConcreteTemplatesCompiler) associatePackages(rec bpjobsrepo.ReleaseJobRecord, relJob bpreljob.Job) error {
 	_, found, err := tc.runPkgsRepo.Find(rec)
 	if err != nil {
-		return bosherr.WrapError(err, "Finding runtime deps for %s", rec)
+		return bosherr.WrapErrorf(err, "Finding runtime deps for %s", rec)
 	}
 
 	if found {
@@ -253,9 +253,9 @@ func (tc ConcreteTemplatesCompiler) associatePackages(rec bpjobsrepo.ReleaseJobR
 	// regardless if job previously was associated with packages
 	allPkgs, found, err := tc.runPkgsRepo.FindAll(rec)
 	if err != nil {
-		return bosherr.WrapError(err, "Finding rel-job -> rel-pkgs %s", rec)
+		return bosherr.WrapErrorf(err, "Finding rel-job -> rel-pkgs %s", rec)
 	} else if !found {
-		return bosherr.New("Expected to find rel-job -> rel-pkgs %s", rec)
+		return bosherr.Errorf("Expected to find rel-job -> rel-pkgs %s", rec)
 	}
 
 	var pkgs []bprel.Package
@@ -272,13 +272,13 @@ func (tc ConcreteTemplatesCompiler) associatePackages(rec bpjobsrepo.ReleaseJobR
 
 	// Return error if at least one depedency is missing
 	if len(pkgs) != len(relJob.Packages) {
-		return bosherr.New("Expected to find all release packages")
+		return bosherr.Error("Expected to find all release packages")
 	}
 
 	// Associate those packages with a job
 	err = tc.runPkgsRepo.Save(rec, pkgs)
 	if err != nil {
-		return bosherr.WrapError(err, "Saving job packages %s", rec)
+		return bosherr.WrapErrorf(err, "Saving job packages %s", rec)
 	}
 
 	return nil

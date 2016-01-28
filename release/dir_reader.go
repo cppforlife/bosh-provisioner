@@ -50,7 +50,7 @@ func (r DirReader) Read() (Release, error) {
 
 	manifestPath := r.pathThatExistsOrEmpty(oldManifestPath, migratedManifestPath)
 	if len(manifestPath) == 0 {
-		return release, bosherr.New(
+		return release, bosherr.Errorf(
 			"Manifest not found at '%s' or '%s'",
 			oldManifestPath,
 			migratedManifestPath,

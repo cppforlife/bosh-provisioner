@@ -166,7 +166,7 @@ func (p AgentProvisioner) placeBinaries() error {
 func (p AgentProvisioner) placeBinary(name, path string) error {
 	err := p.assetManager.Place(name, path)
 	if err != nil {
-		return bosherr.WrapError(err, "Placing %s binary", name)
+		return bosherr.WrapErrorf(err, "Placing %s binary", name)
 	}
 
 	err = p.cmds.ChmodX(path)
@@ -191,7 +191,7 @@ func (p AgentProvisioner) placeConfFiles() error {
 	for assetName, fileName := range fileNames {
 		err := p.assetManager.Place(assetName, filepath.Join("/var/vcap/bosh/", fileName))
 		if err != nil {
-			return bosherr.WrapError(err, "Placing %s", fileName)
+			return bosherr.WrapErrorf(err, "Placing %s", fileName)
 		}
 	}
 

@@ -78,7 +78,7 @@ func (p YumDepsProvisioner) Provision() error {
 
 		err := task.End(p.installPkg(pkgName))
 		if err != nil {
-			return bosherr.WrapError(err, "Installing %s", pkgName)
+			return bosherr.WrapErrorf(err, "Installing %s", pkgName)
 		}
 	}
 

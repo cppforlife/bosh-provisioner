@@ -70,7 +70,7 @@ func (p AptDepsProvisioner) Provision() error {
 
 		err := task.End(p.installPkg(pkgName))
 		if err != nil {
-			return bosherr.WrapError(err, "Installing %s", pkgName)
+			return bosherr.WrapErrorf(err, "Installing %s", pkgName)
 		}
 	}
 
@@ -129,7 +129,7 @@ func (p AptDepsProvisioner) installPkg(name string) error {
 			time.Sleep(1 * time.Second)
 		}
 
-		return bosherr.WrapError(lastInstallErr, "Installing %s after updating", name)
+		return bosherr.WrapErrorf(lastInstallErr, "Installing %s after updating", name)
 	}
 
 	return err

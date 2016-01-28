@@ -14,23 +14,23 @@ func NewWatchTimeFromString(str string) (WatchTime, error) {
 
 	parts := strings.Split(str, "-")
 	if len(parts) != 2 {
-		return watchTime, bosherr.New("Invalid watch time range %s", str)
+		return watchTime, bosherr.Errorf("Invalid watch time range %s", str)
 	}
 
 	min, err := strconv.Atoi(strings.Trim(parts[0], " "))
 	if err != nil {
-		return watchTime, bosherr.WrapError(
+		return watchTime, bosherr.WrapErrorf(
 			err, "Non-positive number as watch time minimum %s", parts[0])
 	}
 
 	max, err := strconv.Atoi(strings.Trim(parts[1], " "))
 	if err != nil {
-		return watchTime, bosherr.WrapError(
+		return watchTime, bosherr.WrapErrorf(
 			err, "Non-positive number as watch time maximum %s", parts[1])
 	}
 
 	if max < min {
-		return watchTime, bosherr.New(
+		return watchTime, bosherr.Errorf(
 			"Watch time must have maximum greater than or equal minimum %s", str)
 	}
 

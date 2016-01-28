@@ -12,7 +12,7 @@ import (
 const waiterLogTag = "Waiter"
 
 var (
-	ErrNotRunning = bosherr.New("Instance did not reach running state")
+	ErrNotRunning = bosherr.Error("Instance did not reach running state")
 )
 
 type Waiter struct {

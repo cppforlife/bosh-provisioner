@@ -62,7 +62,7 @@ func (rac RenderedArchivesCompiler) Compile(relJobs []bpreljob.Job, instance bpd
 
 			err := renderer.Render(template.Path, dstPath)
 			if err != nil {
-				return "", bosherr.WrapError(err, "Rendering %s ERB", template.DstPathEnd)
+				return "", bosherr.WrapErrorf(err, "Rendering %s ERB", template.DstPathEnd)
 			}
 		}
 	}

@@ -29,7 +29,7 @@ func NewBlobstoreDownloader(
 func (d BlobstoreDownloader) Download(url string) (string, error) {
 	parsedURL, err := gourl.Parse(url)
 	if err != nil {
-		return "", bosherr.WrapError(err, "Parsing url %s", url)
+		return "", bosherr.WrapErrorf(err, "Parsing url %s", url)
 	}
 
 	var fingerprint string

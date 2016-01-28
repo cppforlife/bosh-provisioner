@@ -45,7 +45,7 @@ func (r ERBRenderer) Render(srcPath, dstPath string) error {
 
 	err := r.fs.MkdirAll(dirPath, os.FileMode(0755))
 	if err != nil {
-		return bosherr.WrapError(err, "Creating directory %s", dirPath)
+		return bosherr.WrapErrorf(err, "Creating directory %s", dirPath)
 	}
 
 	rendererScriptPath, err := r.writeRendererScript()

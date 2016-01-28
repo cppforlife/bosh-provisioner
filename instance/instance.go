@@ -38,7 +38,7 @@ func (i Instance) Deprovision() error {
 
 	err := i.updater.TearDown()
 	if err != nil {
-		return bosherr.WrapError(err, "Tearing down instance %d", i.depInstance.Index)
+		return bosherr.WrapErrorf(err, "Tearing down instance %d", i.depInstance.Index)
 	}
 
 	return nil
