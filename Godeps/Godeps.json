@@ -7,11 +7,13 @@
 	"Deps": [
 		{
 			"ImportPath": "code.google.com/p/go-charset/charset",
-			"Rev": "b6058e623ec7ee9825b8620e1e5a32ab1898dca7"
+      "Comment": "null-32",
+      "Rev": "ebbeafdc430eb6c7e44e9a730a38eaff4c56ba3a"
 		},
 		{
 			"ImportPath": "code.google.com/p/go-charset/data",
-			"Rev": "b6058e623ec7ee9825b8620e1e5a32ab1898dca7"
+      "Comment": "null-32",
+      "Rev": "ebbeafdc430eb6c7e44e9a730a38eaff4c56ba3a"
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry-incubator/candiedyaml",
