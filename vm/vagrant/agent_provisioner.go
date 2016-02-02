@@ -204,13 +204,8 @@ func (p AgentProvisioner) placeConfFiles() error {
 }
 
 func (p AgentProvisioner) placeAgentConf() error {
-	// etc/infrastructure and etc/plaform is loaded by BOSH Agent runit script
-	err := p.fs.WriteFileString("/var/vcap/bosh/etc/infrastructure", p.agentProvisionerConfig.Infrastructure)
-	if err != nil {
-		return bosherr.WrapError(err, "Writing agent infrastructure")
-	}
-
-	err = p.fs.WriteFileString("/var/vcap/bosh/etc/platform", p.agentProvisionerConfig.Platform)
+	//  etc/plaform is loaded by BOSH Agent runit script
+	err := p.fs.WriteFileString("/var/vcap/bosh/etc/platform", p.agentProvisionerConfig.Platform)
 	if err != nil {
 		return bosherr.WrapError(err, "Writing agent platform")
 	}

@@ -31,9 +31,6 @@ type ProvisionerConfig struct {
 }
 
 type AgentProvisionerConfig struct {
-	// e.g. warden, aws
-	Infrastructure string `json:"infrastructure"`
-
 	// e.g. ubuntu, centos
 	Platform string `json:"platform"`
 

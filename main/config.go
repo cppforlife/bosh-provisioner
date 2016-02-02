@@ -19,17 +19,28 @@ var (
 
 		VMProvisioner: bpvm.ProvisionerConfig{
 			AgentProvisioner: bpvm.AgentProvisionerConfig{
-				Infrastructure: "warden",
-				Platform:       "ubuntu",
-				Mbus:           "https://user:password@127.0.0.1:4321/agent",
+				Platform: "ubuntu",
+				Mbus:     "https://user:password@127.0.0.1:4321/agent",
 			},
 		},
 	}
 
 	DefaultAgentConfiguration = map[string]interface{}{
+		"Infrastructure": map[string]interface{}{
+			"Settings": map[string]interface{}{
+				"UseRegistry": true,
+				"Sources": []map[string]interface{}{
+					{
+						"SettingsPath": "warden-cpi-agent-env.json",
+						"Type":         "File",
+					},
+				},
+			},
+		},
 		"Platform": map[string]interface{}{
 			"Linux": map[string]interface{}{
-				"UseDefaultTmpDir": true,
+				"UseDefaultTmpDir":              true,
+				"UsePreformattedPersistentDisk": true,
 			},
 		},
 	}
