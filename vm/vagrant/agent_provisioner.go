@@ -300,7 +300,7 @@ func (p AgentProvisioner) buildAgentClient() (bpagclient.Client, error) {
 		return nil, bosherr.WrapError(err, "Building agent client")
 	}
 
-	for i := 0; i < 10; i++ {
+	for i := 0; i < 120; i++ {
 		_, err = agentClient.Ping()
 		if err == nil {
 			return agentClient, nil
