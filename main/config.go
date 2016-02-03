@@ -39,8 +39,9 @@ var (
 		},
 		"Platform": map[string]interface{}{
 			"Linux": map[string]interface{}{
-				"UseDefaultTmpDir":              true,
-				"UsePreformattedPersistentDisk": true,
+				"UseDefaultTmpDir":                 true,
+				"UsePreformattedPersistentDisk":    true,
+				"CreatePartitionIfNoEphemeralDisk": true,
 			},
 		},
 	}
