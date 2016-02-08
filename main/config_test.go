@@ -62,9 +62,8 @@ var _ = Describe("NewConfigFromPath", func() {
 					},
 					"Platform": map[string]interface{}{
 						"Linux": map[string]interface{}{
-							"UseDefaultTmpDir":                 true,
-							"UsePreformattedPersistentDisk":    true,
-							"CreatePartitionIfNoEphemeralDisk": true,
+							"UseDefaultTmpDir": true,
+							"SkipDiskSetup":    true,
 						},
 					},
 				},

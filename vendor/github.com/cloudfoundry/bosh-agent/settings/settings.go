@@ -2,6 +2,7 @@ package settings
 
 import (
 	"fmt"
+	"github.com/cloudfoundry/bosh-agent/platform/disk"
 )
 
 const (
@@ -56,10 +57,11 @@ type Disks struct {
 }
 
 type DiskSettings struct {
-	ID       string
-	DeviceID string
-	VolumeID string
-	Path     string
+	ID             string
+	DeviceID       string
+	VolumeID       string
+	Path           string
+	FileSystemType disk.FileSystemType
 }
 
 type VM struct {
@@ -74,7 +76,9 @@ func (s Settings) PersistentDiskSettings(diskID string) (DiskSettings, bool) {
 			diskSettings.ID = diskID
 
 			if hashSettings, ok := settings.(map[string]interface{}); ok {
-				diskSettings.Path = hashSettings["path"].(string)
+				if path, ok := hashSettings["path"]; ok {
+					diskSettings.Path = path.(string)
+				}
 				if volumeID, ok := hashSettings["volume_id"]; ok {
 					diskSettings.VolumeID = volumeID.(string)
 				}
@@ -87,6 +91,7 @@ func (s Settings) PersistentDiskSettings(diskID string) (DiskSettings, bool) {
 				diskSettings.VolumeID = settings.(string)
 			}
 
+			diskSettings.FileSystemType = s.Env.PersistentDiskFS
 			return diskSettings, true
 		}
 	}
@@ -99,7 +104,9 @@ func (s Settings) EphemeralDiskSettings() DiskSettings {
 
 	if s.Disks.Ephemeral != nil {
 		if hashSettings, ok := s.Disks.Ephemeral.(map[string]interface{}); ok {
-			diskSettings.Path = hashSettings["path"].(string)
+			if path, ok := hashSettings["path"]; ok {
+				diskSettings.Path = path.(string)
+			}
 			if volumeID, ok := hashSettings["volume_id"]; ok {
 				diskSettings.VolumeID = volumeID.(string)
 			}
@@ -121,7 +128,8 @@ func (s Settings) RawEphemeralDiskSettings() (devices []DiskSettings) {
 }
 
 type Env struct {
-	Bosh BoshEnv `json:"bosh"`
+	Bosh             BoshEnv             `json:"bosh"`
+	PersistentDiskFS disk.FileSystemType `json:"persistent_disk_fs"`
 }
 
 func (e Env) GetPassword() string {
@@ -295,7 +303,8 @@ func (n Network) IsVIP() bool {
 //	"env": {
 //		"bosh": {
 //			"password": null
-//		}
+//      },
+//      "persistent_disk_fs": "xfs"
 //	},
 //  "trusted_certs": "very\nlong\nmultiline\nstring"
 //	"mbus": "https://vcap:b00tstrap@0.0.0.0:6868",

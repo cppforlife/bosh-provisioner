@@ -21,59 +21,59 @@
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry/bosh-agent/agent/action",
-			"Rev": "ed2b6f45580a428d957af4f7c438fcccf89ffed3"
+			"Rev": "02bcb3d37eb9952aec5ebb50c8afe66c087dbe34"
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry/bosh-agent/agent/alert",
-			"Rev": "ed2b6f45580a428d957af4f7c438fcccf89ffed3"
+			"Rev": "02bcb3d37eb9952aec5ebb50c8afe66c087dbe34"
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry/bosh-agent/agent/applier",
-			"Rev": "ed2b6f45580a428d957af4f7c438fcccf89ffed3"
+			"Rev": "02bcb3d37eb9952aec5ebb50c8afe66c087dbe34"
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry/bosh-agent/agent/cmdrunner",
-			"Rev": "ed2b6f45580a428d957af4f7c438fcccf89ffed3"
+			"Rev": "02bcb3d37eb9952aec5ebb50c8afe66c087dbe34"
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry/bosh-agent/agent/compiler",
-			"Rev": "ed2b6f45580a428d957af4f7c438fcccf89ffed3"
+			"Rev": "02bcb3d37eb9952aec5ebb50c8afe66c087dbe34"
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry/bosh-agent/agent/script",
-			"Rev": "ed2b6f45580a428d957af4f7c438fcccf89ffed3"
+			"Rev": "02bcb3d37eb9952aec5ebb50c8afe66c087dbe34"
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry/bosh-agent/agent/task",
-			"Rev": "ed2b6f45580a428d957af4f7c438fcccf89ffed3"
+			"Rev": "02bcb3d37eb9952aec5ebb50c8afe66c087dbe34"
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry/bosh-agent/handler",
-			"Rev": "ed2b6f45580a428d957af4f7c438fcccf89ffed3"
+			"Rev": "02bcb3d37eb9952aec5ebb50c8afe66c087dbe34"
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry/bosh-agent/infrastructure/devicepathresolver",
-			"Rev": "ed2b6f45580a428d957af4f7c438fcccf89ffed3"
+			"Rev": "02bcb3d37eb9952aec5ebb50c8afe66c087dbe34"
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry/bosh-agent/jobsupervisor",
-			"Rev": "ed2b6f45580a428d957af4f7c438fcccf89ffed3"
+			"Rev": "02bcb3d37eb9952aec5ebb50c8afe66c087dbe34"
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry/bosh-agent/notification",
-			"Rev": "ed2b6f45580a428d957af4f7c438fcccf89ffed3"
+			"Rev": "02bcb3d37eb9952aec5ebb50c8afe66c087dbe34"
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry/bosh-agent/platform",
-			"Rev": "ed2b6f45580a428d957af4f7c438fcccf89ffed3"
+			"Rev": "02bcb3d37eb9952aec5ebb50c8afe66c087dbe34"
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry/bosh-agent/settings",
-			"Rev": "ed2b6f45580a428d957af4f7c438fcccf89ffed3"
+			"Rev": "02bcb3d37eb9952aec5ebb50c8afe66c087dbe34"
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry/bosh-agent/syslog",
-			"Rev": "ed2b6f45580a428d957af4f7c438fcccf89ffed3"
+			"Rev": "02bcb3d37eb9952aec5ebb50c8afe66c087dbe34"
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry/bosh-utils/blobstore",

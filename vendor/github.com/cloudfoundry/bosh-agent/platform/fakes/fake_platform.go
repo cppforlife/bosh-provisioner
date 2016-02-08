@@ -24,6 +24,7 @@ type FakePlatform struct {
 	FakeCompressor    *fakecmd.FakeCompressor
 	FakeCopier        *fakecmd.FakeCopier
 	FakeVitalsService *fakevitals.FakeService
+	fsType            string
 	logger            boshlog.Logger
 
 	DevicePathResolver boshdpresolv.DevicePathResolver
@@ -113,6 +114,9 @@ type FakePlatform struct {
 	GetConfiguredNetworkInterfacesInterfaces []string
 	GetConfiguredNetworkInterfacesErr        error
 
+	CleanedIPMacAddressCache  string
+	CleanIPMacAddressCacheErr error
+
 	certManager boshcert.Manager
 
 	GetHostPublicKeyValue string
@@ -150,6 +154,10 @@ func NewFakePlatform() (platform *FakePlatform) {
 
 func (p *FakePlatform) GetFs() (fs boshsys.FileSystem) {
 	return p.Fs
+}
+
+func (p *FakePlatform) GetPersistentDiskFS() (fsType string) {
+	return p.fsType
 }
 
 func (p *FakePlatform) GetRunner() (runner boshsys.CmdRunner) {
@@ -352,6 +360,11 @@ func (p *FakePlatform) GetMonitCredentials() (username, password string, err err
 	username = p.GetMonitCredentialsUsername
 	password = p.GetMonitCredentialsPassword
 	return
+}
+
+func (p *FakePlatform) CleanIPMacAddressCache(ip string) error {
+	p.CleanedIPMacAddressCache = ip
+	return p.CleanIPMacAddressCacheErr
 }
 
 func (p *FakePlatform) PrepareForNetworkingChange() error {

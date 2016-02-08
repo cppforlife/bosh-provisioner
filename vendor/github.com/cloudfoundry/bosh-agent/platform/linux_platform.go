@@ -2,7 +2,6 @@ package platform
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"os"
 	"path"
@@ -61,6 +60,9 @@ type LinuxOptions struct {
 	// ephemeral disk
 	CreatePartitionIfNoEphemeralDisk bool
 
+	// When set to true the agent will skip both root and ephemeral disk partitioning
+	SkipDiskSetup bool
+
 	// Strategy for resolving device paths;
 	// possible values: virtio, scsi, ''
 	DevicePathResolutionType string
@@ -82,6 +84,7 @@ type linux struct {
 	devicePathResolver     boshdpresolv.DevicePathResolver
 	diskScanDuration       time.Duration
 	options                LinuxOptions
+	state                  *BootstrapState
 	logger                 boshlog.Logger
 	defaultNetworkResolver boshsettings.DefaultNetworkResolver
 }
@@ -101,6 +104,7 @@ func NewLinuxPlatform(
 	monitRetryStrategy boshretry.RetryStrategy,
 	devicePathResolver boshdpresolv.DevicePathResolver,
 	diskScanDuration time.Duration,
+	state *BootstrapState,
 	options LinuxOptions,
 	logger boshlog.Logger,
 	defaultNetworkResolver boshsettings.DefaultNetworkResolver,
@@ -120,6 +124,7 @@ func NewLinuxPlatform(
 		monitRetryStrategy:     monitRetryStrategy,
 		devicePathResolver:     devicePathResolver,
 		diskScanDuration:       diskScanDuration,
+		state:                  state,
 		options:                options,
 		logger:                 logger,
 		defaultNetworkResolver: defaultNetworkResolver,
@@ -272,6 +277,10 @@ func (p linux) findEphemeralUsersMatching(reg *regexp.Regexp) (matchingUsers []s
 }
 
 func (p linux) SetupRootDisk(ephemeralDiskPath string) error {
+	if p.options.SkipDiskSetup {
+		return nil
+	}
+
 	//if there is ephemeral disk we can safely autogrow, if not we should not.
 	if (ephemeralDiskPath == "") && (p.options.CreatePartitionIfNoEphemeralDisk == true) {
 		p.logger.Info(logTag, "No Ephemeral Disk provided, Skipping growing of the Root Filesystem")
@@ -357,33 +366,39 @@ func (p linux) SetUserPassword(user, encryptedPwd string) (err error) {
 	return
 }
 
-func (p linux) SetupHostname(hostname string) (err error) {
-	_, _, _, err = p.cmdRunner.RunCommand("hostname", hostname)
-	if err != nil {
-		err = bosherr.WrapError(err, "Shelling out to hostname")
-		return
+func (p linux) SetupHostname(hostname string) error {
+	if !p.state.Linux.HostsConfigured {
+		_, _, _, err := p.cmdRunner.RunCommand("hostname", hostname)
+		if err != nil {
+			return bosherr.WrapError(err, "Setting hostname")
+		}
+
+		err = p.fs.WriteFileString("/etc/hostname", hostname)
+		if err != nil {
+			return bosherr.WrapError(err, "Writing to /etc/hostname")
+		}
+
+		buffer := bytes.NewBuffer([]byte{})
+		t := template.Must(template.New("etc-hosts").Parse(etcHostsTemplate))
+
+		err = t.Execute(buffer, hostname)
+		if err != nil {
+			return bosherr.WrapError(err, "Generating config from template")
+		}
+
+		err = p.fs.WriteFile("/etc/hosts", buffer.Bytes())
+		if err != nil {
+			return bosherr.WrapError(err, "Writing to /etc/hosts")
+		}
+
+		p.state.Linux.HostsConfigured = true
+		err = p.state.SaveState()
+		if err != nil {
+			return bosherr.WrapError(err, "Setting up hostname")
+		}
 	}
 
-	err = p.fs.WriteFileString("/etc/hostname", hostname)
-	if err != nil {
-		err = bosherr.WrapError(err, "Writing /etc/hostname")
-		return
-	}
-
-	buffer := bytes.NewBuffer([]byte{})
-	t := template.Must(template.New("etc-hosts").Parse(etcHostsTemplate))
-
-	err = t.Execute(buffer, hostname)
-	if err != nil {
-		err = bosherr.WrapError(err, "Generating config from template")
-		return
-	}
-
-	err = p.fs.WriteFile("/etc/hosts", buffer.Bytes())
-	if err != nil {
-		err = bosherr.WrapError(err, "Writing to /etc/hosts")
-	}
-	return
+	return nil
 }
 
 const etcHostsTemplate = `127.0.0.1 localhost {{ . }}
@@ -453,6 +468,10 @@ func (p linux) SetTimeWithNtpServers(servers []string) (err error) {
 }
 
 func (p linux) SetupEphemeralDiskWithPath(realPath string) error {
+	if p.options.SkipDiskSetup {
+		return nil
+	}
+
 	p.logger.Info(logTag, "Setting up ephemeral disk...")
 	mountPoint := p.dirProvider.DataDir()
 
@@ -527,13 +546,13 @@ func (p linux) SetupEphemeralDiskWithPath(realPath string) error {
 }
 
 func (p linux) SetupRawEphemeralDisks(devices []boshsettings.DiskSettings) (err error) {
+	if p.options.SkipDiskSetup {
+		return nil
+	}
+
 	p.logger.Info(logTag, "Setting up raw ephemeral disks")
 
 	for i, device := range devices {
-		if len(device.Path) == 0 {
-			return bosherr.WrapError(errors.New("Path missing"), "Setting up raw ephemeral disks")
-		}
-
 		realPath, _, err := p.devicePathResolver.GetRealDevicePath(device)
 		if err != nil {
 			return bosherr.WrapError(err, "Getting real device path")
@@ -728,7 +747,7 @@ func (p linux) changeTmpDirPermissions(path string) error {
 }
 
 func (p linux) MountPersistentDisk(diskSetting boshsettings.DiskSettings, mountPoint string) error {
-	p.logger.Debug(logTag, "Mounting persistent disk %s at %s", diskSetting.Path, mountPoint)
+	p.logger.Debug(logTag, "Mounting persistent disk %+v at %s", diskSetting, mountPoint)
 
 	err := p.fs.MkdirAll(mountPoint, persistentDiskPermissions)
 	if err != nil {
@@ -751,10 +770,22 @@ func (p linux) MountPersistentDisk(diskSetting boshsettings.DiskSettings, mountP
 		}
 
 		partitionPath := realPath + "1"
+		if strings.Contains(realPath, "/dev/mapper/") {
+			partitionPath = realPath + "-part1"
+		}
 
-		err = p.diskManager.GetFormatter().Format(partitionPath, boshdisk.FileSystemExt4)
+		persistentDiskFS := diskSetting.FileSystemType
+		switch persistentDiskFS {
+		case boshdisk.FileSystemExt4, boshdisk.FileSystemXFS:
+		case boshdisk.FileSystemDefault:
+			persistentDiskFS = boshdisk.FileSystemExt4
+		default:
+			return bosherr.Error(fmt.Sprintf(`The filesystem type "%s" is not supported`, diskSetting.FileSystemType))
+		}
+
+		err = p.diskManager.GetFormatter().Format(partitionPath, persistentDiskFS)
 		if err != nil {
-			return bosherr.WrapError(err, "Formatting partition with ext4")
+			return bosherr.WrapError(err, fmt.Sprintf("Formatting partition with %s", diskSetting.FileSystemType))
 		}
 
 		realPath = partitionPath
@@ -769,7 +800,7 @@ func (p linux) MountPersistentDisk(diskSetting boshsettings.DiskSettings, mountP
 }
 
 func (p linux) UnmountPersistentDisk(diskSettings boshsettings.DiskSettings) (bool, error) {
-	p.logger.Debug(logTag, "Unmounting persistent disk %s", diskSettings.Path)
+	p.logger.Debug(logTag, "Unmounting persistent disk %+v", diskSettings)
 
 	realPath, timedOut, err := p.devicePathResolver.GetRealDevicePath(diskSettings)
 	if timedOut {
@@ -780,17 +811,17 @@ func (p linux) UnmountPersistentDisk(diskSettings boshsettings.DiskSettings) (bo
 	}
 
 	if !p.options.UsePreformattedPersistentDisk {
-		realPath += "1"
+		if strings.Contains(realPath, "/dev/mapper/") {
+			realPath = realPath + "-part1"
+		} else {
+			realPath += "1"
+		}
 	}
 
 	return p.diskManager.GetMounter().Unmount(realPath)
 }
 
 func (p linux) GetEphemeralDiskPath(diskSettings boshsettings.DiskSettings) string {
-	if len(diskSettings.Path) == 0 {
-		return ""
-	}
-
 	realPath, _, err := p.devicePathResolver.GetRealDevicePath(diskSettings)
 	if err != nil {
 		return ""
@@ -835,10 +866,10 @@ func (p linux) MigratePersistentDisk(fromMountPoint, toMountPoint string) (err e
 }
 
 func (p linux) IsPersistentDiskMounted(diskSettings boshsettings.DiskSettings) (bool, error) {
-	p.logger.Debug(logTag, "Checking whether persistent disk %s is mounted", diskSettings.Path)
+	p.logger.Debug(logTag, "Checking whether persistent disk %+v is mounted", diskSettings)
 	realPath, timedOut, err := p.devicePathResolver.GetRealDevicePath(diskSettings)
 	if timedOut {
-		p.logger.Debug(logTag, "Timed out resolving device path %s, ignoring", diskSettings.Path)
+		p.logger.Debug(logTag, "Timed out resolving device path for %+v, ignoring", diskSettings)
 		return false, nil
 	}
 	if err != nil {
@@ -846,7 +877,11 @@ func (p linux) IsPersistentDiskMounted(diskSettings boshsettings.DiskSettings) (
 	}
 
 	if !p.options.UsePreformattedPersistentDisk {
-		realPath += "1"
+		if strings.Contains(realPath, "/dev/mapper/") {
+			realPath = realPath + "-part1"
+		} else {
+			realPath += "1"
+		}
 	}
 
 	return p.diskManager.GetMounter().IsMounted(realPath)
@@ -899,6 +934,15 @@ func (p linux) PrepareForNetworkingChange() error {
 	err := p.fs.RemoveAll("/etc/udev/rules.d/70-persistent-net.rules")
 	if err != nil {
 		return bosherr.WrapError(err, "Removing network rules file")
+	}
+
+	return nil
+}
+
+func (p linux) CleanIPMacAddressCache(ip string) error {
+	_, _, _, err := p.cmdRunner.RunCommand("arp", "-d", ip)
+	if err != nil {
+		return bosherr.WrapError(err, "Deleting arp entry")
 	}
 
 	return nil
