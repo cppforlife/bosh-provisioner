@@ -260,6 +260,8 @@ func (p AgentProvisioner) placeInfSettings(instance bpdep.Instance) error {
 
 			"dns_record_name":  instance.DNDRecordName(netAssoc),
 			"cloud_properties": h{},
+
+			"preconfigured": true,
 		}
 	}
 
