@@ -3,15 +3,15 @@ package disk
 import (
 	"strings"
 
-	bosherr "github.com/cloudfoundry/bosh-agent/errors"
-	boshsys "github.com/cloudfoundry/bosh-agent/system"
+	bosherr "github.com/cloudfoundry/bosh-utils/errors"
+	boshsys "github.com/cloudfoundry/bosh-utils/system"
 )
 
 type cmdMountsSearcher struct {
 	runner boshsys.CmdRunner
 }
 
-func NewCmdMountsSearcher(runner boshsys.CmdRunner) cmdMountsSearcher {
+func NewCmdMountsSearcher(runner boshsys.CmdRunner) MountsSearcher {
 	return cmdMountsSearcher{runner}
 }
 

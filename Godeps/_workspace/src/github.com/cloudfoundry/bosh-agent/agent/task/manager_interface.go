@@ -1,21 +1,22 @@
 package task
 
 import (
-	boshsys "github.com/cloudfoundry/bosh-agent/system"
+	boshlog "github.com/cloudfoundry/bosh-utils/logger"
+	boshsys "github.com/cloudfoundry/bosh-utils/system"
 )
 
-type TaskInfo struct {
+type Info struct {
 	TaskID  string
 	Method  string
 	Payload []byte
 }
 
 type ManagerProvider interface {
-	NewManager(boshsys.FileSystem, string) Manager
+	NewManager(boshlog.Logger, boshsys.FileSystem, string) Manager
 }
 
 type Manager interface {
-	GetTaskInfos() ([]TaskInfo, error)
-	AddTaskInfo(taskInfo TaskInfo) error
-	RemoveTaskInfo(taskID string) error
+	GetInfos() ([]Info, error)
+	AddInfo(taskInfo Info) error
+	RemoveInfo(taskID string) error
 }

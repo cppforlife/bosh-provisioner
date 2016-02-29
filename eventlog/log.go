@@ -3,7 +3,7 @@ package eventlog
 import (
 	"time"
 
-	boshlog "github.com/cloudfoundry/bosh-agent/logger"
+	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 )
 
 const logLogTag = "Log"

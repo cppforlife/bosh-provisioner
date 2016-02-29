@@ -5,9 +5,9 @@ import (
 	"strings"
 	"time"
 
-	bosherr "github.com/cloudfoundry/bosh-agent/errors"
-	boshlog "github.com/cloudfoundry/bosh-agent/logger"
-	boshsys "github.com/cloudfoundry/bosh-agent/system"
+	bosherr "github.com/cloudfoundry/bosh-utils/errors"
+	boshlog "github.com/cloudfoundry/bosh-utils/logger"
+	boshsys "github.com/cloudfoundry/bosh-utils/system"
 
 	bpeventlog "github.com/cppforlife/bosh-provisioner/eventlog"
 )
@@ -70,7 +70,7 @@ func (p AptDepsProvisioner) Provision() error {
 
 		err := task.End(p.installPkg(pkgName))
 		if err != nil {
-			return bosherr.WrapError(err, "Installing %s", pkgName)
+			return bosherr.WrapErrorf(err, "Installing %s", pkgName)
 		}
 	}
 
@@ -129,7 +129,7 @@ func (p AptDepsProvisioner) installPkg(name string) error {
 			time.Sleep(1 * time.Second)
 		}
 
-		return bosherr.WrapError(lastInstallErr, "Installing %s after updating", name)
+		return bosherr.WrapErrorf(lastInstallErr, "Installing %s after updating", name)
 	}
 
 	return err

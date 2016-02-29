@@ -2,17 +2,17 @@ package jobsupervisor
 
 import (
 	"fmt"
-	"path/filepath"
+	"path"
 	"time"
 
 	"github.com/pivotal/go-smtpd/smtpd"
 
 	boshalert "github.com/cloudfoundry/bosh-agent/agent/alert"
-	bosherr "github.com/cloudfoundry/bosh-agent/errors"
 	boshmonit "github.com/cloudfoundry/bosh-agent/jobsupervisor/monit"
-	boshlog "github.com/cloudfoundry/bosh-agent/logger"
 	boshdir "github.com/cloudfoundry/bosh-agent/settings/directories"
-	boshsys "github.com/cloudfoundry/bosh-agent/system"
+	bosherr "github.com/cloudfoundry/bosh-utils/errors"
+	boshlog "github.com/cloudfoundry/bosh-utils/logger"
+	boshsys "github.com/cloudfoundry/bosh-utils/system"
 )
 
 const monitJobSupervisorLogTag = "monitJobSupervisor"
@@ -22,7 +22,7 @@ type monitJobSupervisor struct {
 	runner      boshsys.CmdRunner
 	client      boshmonit.Client
 	logger      boshlog.Logger
-	dirProvider boshdir.DirectoriesProvider
+	dirProvider boshdir.Provider
 
 	jobFailuresServerPort int
 
@@ -46,10 +46,10 @@ func NewMonitJobSupervisor(
 	runner boshsys.CmdRunner,
 	client boshmonit.Client,
 	logger boshlog.Logger,
-	dirProvider boshdir.DirectoriesProvider,
+	dirProvider boshdir.Provider,
 	jobFailuresServerPort int,
 	reloadOptions MonitReloadOptions,
-) (m monitJobSupervisor) {
+) JobSupervisor {
 	return monitJobSupervisor{
 		fs:          fs,
 		runner:      runner,
@@ -103,7 +103,7 @@ func (m monitJobSupervisor) Reload() error {
 		}
 	}
 
-	return bosherr.New(
+	return bosherr.Errorf(
 		"Failed to reload monit: before=%d after=%d",
 		oldIncarnation, currentIncarnation,
 	)
@@ -116,11 +116,16 @@ func (m monitJobSupervisor) Start() error {
 	}
 
 	for _, service := range services {
+		m.logger.Debug(monitJobSupervisorLogTag, "Starting service %s", service)
 		err = m.client.StartService(service)
 		if err != nil {
-			return bosherr.WrapError(err, "Starting service %s", service)
+			return bosherr.WrapErrorf(err, "Starting service %s", service)
 		}
-		m.logger.Debug(monitJobSupervisorLogTag, "Starting service %s", service)
+	}
+
+	err = m.fs.RemoveAll(m.stoppedFilePath())
+	if err != nil {
+		return bosherr.WrapError(err, "Removing stopped File")
 	}
 
 	return nil
@@ -133,11 +138,16 @@ func (m monitJobSupervisor) Stop() error {
 	}
 
 	for _, service := range services {
+		m.logger.Debug(monitJobSupervisorLogTag, "Stopping service %s", service)
 		err = m.client.StopService(service)
 		if err != nil {
-			return bosherr.WrapError(err, "Stopping service %s", service)
+			return bosherr.WrapErrorf(err, "Stopping service %s", service)
 		}
-		m.logger.Debug(monitJobSupervisorLogTag, "Stopping service %s", service)
+	}
+
+	err = m.fs.WriteFileString(m.stoppedFilePath(), "")
+	if err != nil {
+		return bosherr.WrapError(err, "Creating stopped File")
 	}
 
 	return nil
@@ -150,11 +160,11 @@ func (m monitJobSupervisor) Unmonitor() error {
 	}
 
 	for _, service := range services {
+		m.logger.Debug(monitJobSupervisorLogTag, "Unmonitoring service %s", service)
 		err := m.client.UnmonitorService(service)
 		if err != nil {
-			return bosherr.WrapError(err, "Unmonitoring service %s", service)
+			return bosherr.WrapErrorf(err, "Unmonitoring service %s", service)
 		}
-		m.logger.Debug(monitJobSupervisorLogTag, "Unmonitoring service %s", service)
 	}
 
 	return nil
@@ -162,19 +172,56 @@ func (m monitJobSupervisor) Unmonitor() error {
 
 func (m monitJobSupervisor) Status() (status string) {
 	status = "running"
+
+	m.logger.Debug(monitJobSupervisorLogTag, "Getting monit status")
 	monitStatus, err := m.client.Status()
 	if err != nil {
 		status = "unknown"
 		return
 	}
 
+	if m.fs.FileExists(m.stoppedFilePath()) {
+		status = "stopped"
+
+	} else {
+		services := monitStatus.ServicesInGroup("vcap")
+		for _, service := range services {
+			if service.Status == "starting" {
+				return "starting"
+			}
+			if !service.Monitored || service.Status != "running" {
+				status = "failing"
+			}
+		}
+	}
+
+	return
+}
+
+func (m monitJobSupervisor) Processes() (processes []Process, err error) {
+	processes = []Process{}
+
+	monitStatus, err := m.client.Status()
+	if err != nil {
+		return processes, bosherr.WrapError(err, "Getting service status")
+	}
+
 	for _, service := range monitStatus.ServicesInGroup("vcap") {
-		if service.Status == "starting" {
-			return "starting"
+		process := Process{
+			Name:  service.Name,
+			State: service.Status,
+			Uptime: UptimeVitals{
+				Secs: service.Uptime,
+			},
+			Memory: MemoryVitals{
+				Kb:      service.MemoryKilobytesTotal,
+				Percent: service.MemoryPercentTotal,
+			},
+			CPU: CPUVitals{
+				Total: service.CPUPercentTotal,
+			},
 		}
-		if !service.Monitored || service.Status != "running" {
-			status = "failing"
-		}
+		processes = append(processes, process)
 	}
 
 	return
@@ -191,7 +238,7 @@ func (m monitJobSupervisor) getIncarnation() (int, error) {
 
 func (m monitJobSupervisor) AddJob(jobName string, jobIndex int, configPath string) error {
 	targetFilename := fmt.Sprintf("%04d_%s.monitrc", jobIndex, jobName)
-	targetConfigPath := filepath.Join(m.dirProvider.MonitJobsDir(), targetFilename)
+	targetConfigPath := path.Join(m.dirProvider.MonitJobsDir(), targetFilename)
 
 	configContent, err := m.fs.ReadFile(configPath)
 	if err != nil {
@@ -221,7 +268,7 @@ func (m monitJobSupervisor) MonitorJobFailures(handler JobFailureHandler) (err e
 	}
 
 	serv := &smtpd.Server{
-		Addr:      fmt.Sprintf(":%d", m.jobFailuresServerPort),
+		Addr:      fmt.Sprintf("127.0.0.1:%d", m.jobFailuresServerPort),
 		OnNewMail: alertHandler,
 	}
 
@@ -230,4 +277,8 @@ func (m monitJobSupervisor) MonitorJobFailures(handler JobFailureHandler) (err e
 		err = bosherr.WrapError(err, "Listen for SMTP")
 	}
 	return
+}
+
+func (m monitJobSupervisor) stoppedFilePath() string {
+	return path.Join(m.dirProvider.MonitDir(), "stopped")
 }

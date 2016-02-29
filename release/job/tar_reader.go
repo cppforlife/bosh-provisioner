@@ -3,9 +3,9 @@ package job
 import (
 	"path/filepath"
 
-	bosherr "github.com/cloudfoundry/bosh-agent/errors"
-	boshlog "github.com/cloudfoundry/bosh-agent/logger"
-	boshsys "github.com/cloudfoundry/bosh-agent/system"
+	bosherr "github.com/cloudfoundry/bosh-utils/errors"
+	boshlog "github.com/cloudfoundry/bosh-utils/logger"
+	boshsys "github.com/cloudfoundry/bosh-utils/system"
 
 	bpdload "github.com/cppforlife/bosh-provisioner/downloader"
 	bpreljobman "github.com/cppforlife/bosh-provisioner/release/job/manifest"

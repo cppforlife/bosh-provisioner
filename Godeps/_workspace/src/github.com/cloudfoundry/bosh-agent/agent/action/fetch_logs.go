@@ -4,24 +4,24 @@ import (
 	"errors"
 	"path/filepath"
 
-	boshblob "github.com/cloudfoundry/bosh-agent/blobstore"
-	bosherr "github.com/cloudfoundry/bosh-agent/errors"
-	boshcmd "github.com/cloudfoundry/bosh-agent/platform/commands"
 	boshdirs "github.com/cloudfoundry/bosh-agent/settings/directories"
+	boshblob "github.com/cloudfoundry/bosh-utils/blobstore"
+	bosherr "github.com/cloudfoundry/bosh-utils/errors"
+	boshcmd "github.com/cloudfoundry/bosh-utils/fileutil"
 )
 
 type FetchLogsAction struct {
 	compressor  boshcmd.Compressor
 	copier      boshcmd.Copier
 	blobstore   boshblob.Blobstore
-	settingsDir boshdirs.DirectoriesProvider
+	settingsDir boshdirs.Provider
 }
 
 func NewFetchLogs(
 	compressor boshcmd.Compressor,
 	copier boshcmd.Copier,
 	blobstore boshblob.Blobstore,
-	settingsDir boshdirs.DirectoriesProvider,
+	settingsDir boshdirs.Provider,
 ) (action FetchLogsAction) {
 	action.compressor = compressor
 	action.copier = copier
@@ -44,7 +44,7 @@ func (a FetchLogsAction) Run(logType string, filters []string) (value map[string
 	switch logType {
 	case "job":
 		if len(filters) == 0 {
-			filters = []string{"**/*.log"}
+			filters = []string{"**/*"}
 		}
 		logsDir = filepath.Join(a.settingsDir.BaseDir(), "sys", "log")
 	case "agent":
@@ -53,7 +53,7 @@ func (a FetchLogsAction) Run(logType string, filters []string) (value map[string
 		}
 		logsDir = filepath.Join(a.settingsDir.BaseDir(), "bosh", "log")
 	default:
-		err = bosherr.New("Invalid log type")
+		err = bosherr.Error("Invalid log type")
 		return
 	}
 
@@ -71,7 +71,9 @@ func (a FetchLogsAction) Run(logType string, filters []string) (value map[string
 		return
 	}
 
-	defer a.compressor.CleanUp(tarball)
+	defer func() {
+		_ = a.compressor.CleanUp(tarball)
+	}()
 
 	blobID, _, err := a.blobstore.Create(tarball)
 	if err != nil {

@@ -1,7 +1,7 @@
 package provisioner
 
 import (
-	boshlog "github.com/cloudfoundry/bosh-agent/logger"
+	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 
 	bpdep "github.com/cppforlife/bosh-provisioner/deployment"
 	bpeventlog "github.com/cppforlife/bosh-provisioner/eventlog"

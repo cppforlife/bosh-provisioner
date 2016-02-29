@@ -4,8 +4,8 @@ import (
 	"strings"
 	"time"
 
-	bosherr "github.com/cloudfoundry/bosh-agent/errors"
-	boshsys "github.com/cloudfoundry/bosh-agent/system"
+	bosherr "github.com/cloudfoundry/bosh-utils/errors"
+	boshsys "github.com/cloudfoundry/bosh-utils/system"
 )
 
 type linuxMounter struct {
@@ -19,12 +19,13 @@ func NewLinuxMounter(
 	runner boshsys.CmdRunner,
 	mountsSearcher MountsSearcher,
 	unmountRetrySleep time.Duration,
-) (mounter linuxMounter) {
-	mounter.runner = runner
-	mounter.mountsSearcher = mountsSearcher
-	mounter.maxUnmountRetries = 600
-	mounter.unmountRetrySleep = unmountRetrySleep
-	return
+) Mounter {
+	return linuxMounter{
+		runner:            runner,
+		mountsSearcher:    mountsSearcher,
+		maxUnmountRetries: 600,
+		unmountRetrySleep: unmountRetrySleep,
+	}
 }
 
 func (m linuxMounter) Mount(partitionPath, mountPoint string, mountOptions ...string) error {
@@ -53,14 +54,14 @@ func (m linuxMounter) RemountAsReadonly(mountPoint string) error {
 }
 
 func (m linuxMounter) Remount(fromMountPoint, toMountPoint string, mountOptions ...string) error {
-	partitionPath, found, err := m.findDeviceMatchingMountPoint(fromMountPoint)
+	partitionPath, found, err := m.IsMountPoint(fromMountPoint)
 	if err != nil || !found {
-		return bosherr.WrapError(err, "Error finding device for mount point %s", fromMountPoint)
+		return bosherr.WrapErrorf(err, "Error finding device for mount point %s", fromMountPoint)
 	}
 
 	_, err = m.Unmount(fromMountPoint)
 	if err != nil {
-		return bosherr.WrapError(err, "Unmounting %s", fromMountPoint)
+		return bosherr.WrapErrorf(err, "Unmounting %s", fromMountPoint)
 	}
 
 	return m.Mount(partitionPath, toMountPoint, mountOptions...)
@@ -106,29 +107,14 @@ func (m linuxMounter) Unmount(partitionOrMountPoint string) (bool, error) {
 	return err == nil, err
 }
 
-func (m linuxMounter) IsMountPoint(path string) (bool, error) {
-	mounts, err := m.mountsSearcher.SearchMounts()
-	if err != nil {
-		return false, bosherr.WrapError(err, "Searching mounts")
-	}
-
-	for _, mount := range mounts {
-		if mount.MountPoint == path {
-			return true, nil
-		}
-	}
-
-	return false, nil
-}
-
-func (m linuxMounter) findDeviceMatchingMountPoint(mountPoint string) (string, bool, error) {
+func (m linuxMounter) IsMountPoint(path string) (string, bool, error) {
 	mounts, err := m.mountsSearcher.SearchMounts()
 	if err != nil {
 		return "", false, bosherr.WrapError(err, "Searching mounts")
 	}
 
 	for _, mount := range mounts {
-		if mount.MountPoint == mountPoint {
+		if mount.MountPoint == path {
 			return mount.PartitionPath, true, nil
 		}
 	}
@@ -161,11 +147,11 @@ func (m linuxMounter) shouldMount(partitionPath, mountPoint string) (bool, error
 		switch {
 		case mount.PartitionPath == partitionPath && mount.MountPoint == mountPoint:
 			return false, nil
-		case mount.PartitionPath == partitionPath && mount.MountPoint != mountPoint:
-			return false, bosherr.New("Device %s is already mounted to %s, can't mount to %s",
+		case mount.PartitionPath == partitionPath && mount.MountPoint != mountPoint && partitionPath != "tmpfs":
+			return false, bosherr.Errorf("Device %s is already mounted to %s, can't mount to %s",
 				mount.PartitionPath, mount.MountPoint, mountPoint)
 		case mount.MountPoint == mountPoint:
-			return false, bosherr.New("Device %s is already mounted to %s, can't mount %s",
+			return false, bosherr.Errorf("Device %s is already mounted to %s, can't mount %s",
 				mount.PartitionPath, mount.MountPoint, partitionPath)
 		}
 	}

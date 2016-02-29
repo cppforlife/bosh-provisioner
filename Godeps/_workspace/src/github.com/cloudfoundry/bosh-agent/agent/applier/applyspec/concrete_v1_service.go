@@ -3,9 +3,9 @@ package applyspec
 import (
 	"encoding/json"
 
-	bosherr "github.com/cloudfoundry/bosh-agent/errors"
 	boshsettings "github.com/cloudfoundry/bosh-agent/settings"
-	boshsys "github.com/cloudfoundry/bosh-agent/system"
+	bosherr "github.com/cloudfoundry/bosh-utils/errors"
+	boshsys "github.com/cloudfoundry/bosh-utils/system"
 )
 
 type concreteV1Service struct {
@@ -13,10 +13,11 @@ type concreteV1Service struct {
 	specFilePath string
 }
 
-func NewConcreteV1Service(fs boshsys.FileSystem, specFilePath string) concreteV1Service {
+func NewConcreteV1Service(fs boshsys.FileSystem, specFilePath string) V1Service {
 	return concreteV1Service{fs: fs, specFilePath: specFilePath}
 }
 
+// Get reads and marshals the file contents.
 func (s concreteV1Service) Get() (V1ApplySpec, error) {
 	var spec V1ApplySpec
 
@@ -37,6 +38,7 @@ func (s concreteV1Service) Get() (V1ApplySpec, error) {
 	return spec, nil
 }
 
+// Set unmarshals and writes to the file.
 func (s concreteV1Service) Set(spec V1ApplySpec) error {
 	specBytes, err := json.Marshal(spec)
 	if err != nil {
@@ -51,15 +53,22 @@ func (s concreteV1Service) Set(spec V1ApplySpec) error {
 	return nil
 }
 
-func (s concreteV1Service) PopulateDynamicNetworks(spec V1ApplySpec, settings boshsettings.Settings) (V1ApplySpec, error) {
+func (s concreteV1Service) PopulateDHCPNetworks(spec V1ApplySpec, settings boshsettings.Settings) (V1ApplySpec, error) {
 	for networkName, networkSpec := range spec.NetworkSpecs {
-		if !networkSpec.IsDynamic() {
+		// Skip 'local' network since for vsphere/vcloud networks
+		// are generated incorrectly by the bosh_cli_plugin_micro/bosh-release;
+		// can be removed with new bosh micro CLI
+		if networkName == "local" && networkSpec.Fields["ip"] == "127.0.0.1" {
 			continue
 		}
 
 		network, ok := settings.Networks[networkName]
 		if !ok {
-			return V1ApplySpec{}, bosherr.New("Network %s is not found in settings", networkName)
+			return V1ApplySpec{}, bosherr.Errorf("Network '%s' is not found in settings", networkName)
+		}
+
+		if !network.IsDHCP() {
+			continue
 		}
 
 		spec.NetworkSpecs[networkName] = networkSpec.PopulateIPInfo(

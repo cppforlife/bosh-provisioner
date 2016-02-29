@@ -4,9 +4,9 @@ import (
 	"fmt"
 
 	boshcomp "github.com/cloudfoundry/bosh-agent/agent/compiler"
-	boshblob "github.com/cloudfoundry/bosh-agent/blobstore"
-	bosherr "github.com/cloudfoundry/bosh-agent/errors"
-	boshlog "github.com/cloudfoundry/bosh-agent/logger"
+	boshblob "github.com/cloudfoundry/bosh-utils/blobstore"
+	bosherr "github.com/cloudfoundry/bosh-utils/errors"
+	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 
 	bpagentclient "github.com/cppforlife/bosh-provisioner/agent/client"
 	bpeventlog "github.com/cppforlife/bosh-provisioner/eventlog"
@@ -63,7 +63,7 @@ func (pc ConcretePackagesCompiler) Compile(release bprel.Release) error {
 
 		_, found, err := pc.compiledPackagesRepo.Find(*pkg)
 		if err != nil {
-			return task.End(bosherr.WrapError(err, "Finding compiled package %s", pkg.Name))
+			return task.End(bosherr.WrapErrorf(err, "Finding compiled package %s", pkg.Name))
 		} else if found {
 			task.End(nil)
 			continue
@@ -85,9 +85,9 @@ func (pc ConcretePackagesCompiler) FindCompiledPackage(pkg bprel.Package) (Compi
 
 	rec, found, err := pc.compiledPackagesRepo.Find(pkg)
 	if err != nil {
-		return compiledPkgRec, bosherr.WrapError(err, "Finding compiled package %s", pkg.Name)
+		return compiledPkgRec, bosherr.WrapErrorf(err, "Finding compiled package %s", pkg.Name)
 	} else if !found {
-		return compiledPkgRec, bosherr.New("Expected to find compiled package %s", pkg.Name)
+		return compiledPkgRec, bosherr.Errorf("Expected to find compiled package %s", pkg.Name)
 	}
 
 	compiledPkgRec.SHA1 = rec.SHA1
@@ -105,13 +105,13 @@ func (pc ConcretePackagesCompiler) compilePkg(pkg bprel.Package) error {
 
 	pkgRec, found, err := pc.packagesRepo.Find(pkg)
 	if err != nil {
-		return bosherr.WrapError(err, "Finding package source blob %s", pkg.Name)
+		return bosherr.WrapErrorf(err, "Finding package source blob %s", pkg.Name)
 	}
 
 	if !found {
 		blobID, fingerprint, err := pc.blobstore.Create(pkg.TarPath)
 		if err != nil {
-			return bosherr.WrapError(err, "Creating package source blob %s", pkg.Name)
+			return bosherr.WrapErrorf(err, "Creating package source blob %s", pkg.Name)
 		}
 
 		pkgRec = bppkgsrepo.PackageRecord{
@@ -121,7 +121,7 @@ func (pc ConcretePackagesCompiler) compilePkg(pkg bprel.Package) error {
 
 		err = pc.packagesRepo.Save(pkg, pkgRec)
 		if err != nil {
-			return bosherr.WrapError(err, "Saving package record %s", pkg.Name)
+			return bosherr.WrapErrorf(err, "Saving package record %s", pkg.Name)
 		}
 	}
 
@@ -138,7 +138,7 @@ func (pc ConcretePackagesCompiler) compilePkg(pkg bprel.Package) error {
 		deps,
 	)
 	if err != nil {
-		return bosherr.WrapError(err, "Compiling package %s", pkg.Name)
+		return bosherr.WrapErrorf(err, "Compiling package %s", pkg.Name)
 	}
 
 	compiledPkgRec := bpcpkgsrepo.CompiledPackageRecord{
@@ -148,7 +148,7 @@ func (pc ConcretePackagesCompiler) compilePkg(pkg bprel.Package) error {
 
 	err = pc.compiledPackagesRepo.Save(pkg, compiledPkgRec)
 	if err != nil {
-		return bosherr.WrapError(err, "Saving compiled package %s", pkg.Name)
+		return bosherr.WrapErrorf(err, "Saving compiled package %s", pkg.Name)
 	}
 
 	return nil
@@ -162,9 +162,9 @@ func (pc ConcretePackagesCompiler) buildPkgDeps(pkg bprel.Package) (boshcomp.Dep
 	for _, depPkg := range pkg.Dependencies {
 		compiledPkgRec, found, err := pc.compiledPackagesRepo.Find(*depPkg)
 		if err != nil {
-			return deps, bosherr.WrapError(err, "Finding compiled package %s", depPkg.Name)
+			return deps, bosherr.WrapErrorf(err, "Finding compiled package %s", depPkg.Name)
 		} else if !found {
-			return deps, bosherr.New("Expected to find compiled package %s", depPkg.Name)
+			return deps, bosherr.Errorf("Expected to find compiled package %s", depPkg.Name)
 		}
 
 		deps[depPkg.Name] = boshcomp.Package{

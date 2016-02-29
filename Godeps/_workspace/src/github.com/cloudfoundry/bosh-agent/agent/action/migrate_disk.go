@@ -3,19 +3,19 @@ package action
 import (
 	"errors"
 
-	bosherr "github.com/cloudfoundry/bosh-agent/errors"
 	boshplatform "github.com/cloudfoundry/bosh-agent/platform"
 	boshdirs "github.com/cloudfoundry/bosh-agent/settings/directories"
+	bosherr "github.com/cloudfoundry/bosh-utils/errors"
 )
 
 type MigrateDiskAction struct {
 	platform    boshplatform.Platform
-	dirProvider boshdirs.DirectoriesProvider
+	dirProvider boshdirs.Provider
 }
 
 func NewMigrateDisk(
 	platform boshplatform.Platform,
-	dirProvider boshdirs.DirectoriesProvider,
+	dirProvider boshdirs.Provider,
 ) (action MigrateDiskAction) {
 	action.platform = platform
 	action.dirProvider = dirProvider

@@ -2,28 +2,36 @@ package action
 
 import (
 	"errors"
-	"path/filepath"
+	"path"
 
-	bosherr "github.com/cloudfoundry/bosh-agent/errors"
 	boshplatform "github.com/cloudfoundry/bosh-agent/platform"
 	boshsettings "github.com/cloudfoundry/bosh-agent/settings"
 	boshdirs "github.com/cloudfoundry/bosh-agent/settings/directories"
+	bosherr "github.com/cloudfoundry/bosh-utils/errors"
+	boshlog "github.com/cloudfoundry/bosh-utils/logger"
+)
+
+const (
+	sshActionLogTag = "SSH Action"
 )
 
 type SSHAction struct {
 	settingsService boshsettings.Service
 	platform        boshplatform.Platform
-	dirProvider     boshdirs.DirectoriesProvider
+	dirProvider     boshdirs.Provider
+	logger          boshlog.Logger
 }
 
 func NewSSH(
 	settingsService boshsettings.Service,
 	platform boshplatform.Platform,
-	dirProvider boshdirs.DirectoriesProvider,
+	dirProvider boshdirs.Provider,
+	logger boshlog.Logger,
 ) (action SSHAction) {
 	action.settingsService = settingsService
 	action.platform = platform
 	action.dirProvider = dirProvider
+	action.logger = logger
 	return
 }
 
@@ -43,9 +51,10 @@ type SSHParams struct {
 }
 
 type SSHResult struct {
-	Command string `json:"command"`
-	Status  string `json:"status"`
-	IP      string `json:"ip,omitempty"`
+	Command       string `json:"command"`
+	Status        string `json:"status"`
+	IP            string `json:"ip,omitempty"`
+	HostPublicKey string `json:"host_public_key,omitempty"`
 }
 
 func (a SSHAction) Run(cmd string, params SSHParams) (SSHResult, error) {
@@ -62,14 +71,14 @@ func (a SSHAction) Run(cmd string, params SSHParams) (SSHResult, error) {
 func (a SSHAction) setupSSH(params SSHParams) (SSHResult, error) {
 	var result SSHResult
 
-	boshSSHPath := filepath.Join(a.dirProvider.BaseDir(), "bosh_ssh")
+	boshSSHPath := path.Join(a.dirProvider.BaseDir(), "bosh_ssh")
 
 	err := a.platform.CreateUser(params.User, params.Password, boshSSHPath)
 	if err != nil {
 		return result, bosherr.WrapError(err, "Creating user")
 	}
 
-	err = a.platform.AddUserToGroups(params.User, []string{boshsettings.VCAPUsername, boshsettings.AdminGroup})
+	err = a.platform.AddUserToGroups(params.User, []string{boshsettings.VCAPUsername, boshsettings.AdminGroup, boshsettings.SudoersGroup})
 	if err != nil {
 		return result, bosherr.WrapError(err, "Adding user to groups")
 	}
@@ -86,10 +95,16 @@ func (a SSHAction) setupSSH(params SSHParams) (SSHResult, error) {
 		return result, errors.New("No default ip could be found")
 	}
 
+	publicKey, err := a.platform.GetHostPublicKey()
+	if err != nil {
+		return result, bosherr.WrapError(err, "Getting host public key")
+	}
+
 	result = SSHResult{
-		Command: "setup",
-		Status:  "success",
-		IP:      defaultIP,
+		Command:       "setup",
+		Status:        "success",
+		IP:            defaultIP,
+		HostPublicKey: publicKey,
 	}
 
 	return result, nil

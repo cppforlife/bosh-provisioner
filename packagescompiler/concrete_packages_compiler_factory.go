@@ -1,8 +1,8 @@
 package packagescompiler
 
 import (
-	boshblob "github.com/cloudfoundry/bosh-agent/blobstore"
-	boshlog "github.com/cloudfoundry/bosh-agent/logger"
+	boshblob "github.com/cloudfoundry/bosh-utils/blobstore"
+	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 
 	bpagclient "github.com/cppforlife/bosh-provisioner/agent/client"
 	bpeventlog "github.com/cppforlife/bosh-provisioner/eventlog"

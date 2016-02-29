@@ -4,11 +4,11 @@ import (
 	"bytes"
 	"fmt"
 	"os"
-	"path/filepath"
+	"path"
 	"unicode/utf8"
 
-	bosherr "github.com/cloudfoundry/bosh-agent/errors"
-	boshsys "github.com/cloudfoundry/bosh-agent/system"
+	bosherr "github.com/cloudfoundry/bosh-utils/errors"
+	boshsys "github.com/cloudfoundry/bosh-utils/system"
 )
 
 const (
@@ -62,34 +62,38 @@ func NewFileLoggingCmdRunner(
 }
 
 func (f FileLoggingCmdRunner) RunCommand(jobName string, taskName string, cmd boshsys.Command) (*CmdResult, error) {
-	logsDir := filepath.Join(f.baseDir, jobName)
+	logsDir := path.Join(f.baseDir, jobName)
 
 	err := f.fs.RemoveAll(logsDir)
 	if err != nil {
-		return nil, bosherr.WrapError(err, "Removing log dir for job %s", jobName)
+		return nil, bosherr.WrapErrorf(err, "Removing log dir for job %s", jobName)
 	}
 
 	err = f.fs.MkdirAll(logsDir, os.FileMode(0750))
 	if err != nil {
-		return nil, bosherr.WrapError(err, "Creating log dir for job %s", jobName)
+		return nil, bosherr.WrapErrorf(err, "Creating log dir for job %s", jobName)
 	}
 
-	stdoutPath := filepath.Join(logsDir, fmt.Sprintf("%s.stdout.log", taskName))
-	stderrPath := filepath.Join(logsDir, fmt.Sprintf("%s.stderr.log", taskName))
+	stdoutPath := path.Join(logsDir, fmt.Sprintf("%s.stdout.log", taskName))
+	stderrPath := path.Join(logsDir, fmt.Sprintf("%s.stderr.log", taskName))
 
 	stdoutFile, err := f.fs.OpenFile(stdoutPath, fileOpenFlag, fileOpenPerm)
 	if err != nil {
-		return nil, bosherr.WrapError(err, "Opening stdout for task %s", taskName)
+		return nil, bosherr.WrapErrorf(err, "Opening stdout for task %s", taskName)
 	}
-	defer stdoutFile.Close()
+	defer func() {
+		_ = stdoutFile.Close()
+	}()
 
 	cmd.Stdout = stdoutFile
 
 	stderrFile, err := f.fs.OpenFile(stderrPath, fileOpenFlag, fileOpenPerm)
 	if err != nil {
-		return nil, bosherr.WrapError(err, "Opening stderr for task %s", taskName)
+		return nil, bosherr.WrapErrorf(err, "Opening stderr for task %s", taskName)
 	}
-	defer stderrFile.Close()
+	defer func() {
+		_ = stderrFile.Close()
+	}()
 
 	cmd.Stderr = stderrFile
 
@@ -98,12 +102,12 @@ func (f FileLoggingCmdRunner) RunCommand(jobName string, taskName string, cmd bo
 
 	stdout, isStdoutTruncated, err := f.getTruncatedOutput(stdoutFile, f.truncateLength)
 	if err != nil {
-		return nil, bosherr.WrapError(err, "Truncating stdout for task %s", taskName)
+		return nil, bosherr.WrapErrorf(err, "Truncating stdout for task %s", taskName)
 	}
 
 	stderr, isStderrTruncated, err := f.getTruncatedOutput(stderrFile, f.truncateLength)
 	if err != nil {
-		return nil, bosherr.WrapError(err, "Truncating stderr for task %s", taskName)
+		return nil, bosherr.WrapErrorf(err, "Truncating stderr for task %s", taskName)
 	}
 
 	result := &CmdResult{
@@ -123,7 +127,7 @@ func (f FileLoggingCmdRunner) RunCommand(jobName string, taskName string, cmd bo
 	return result, nil
 }
 
-func (f FileLoggingCmdRunner) getTruncatedOutput(file boshsys.ReadWriteCloseStater, truncateLength int64) ([]byte, bool, error) {
+func (f FileLoggingCmdRunner) getTruncatedOutput(file boshsys.File, truncateLength int64) ([]byte, bool, error) {
 	isTruncated := false
 
 	stat, err := file.Stat()

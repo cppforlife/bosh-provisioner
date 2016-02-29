@@ -3,8 +3,8 @@ package eventlog
 import (
 	"os"
 
-	bosherr "github.com/cloudfoundry/bosh-agent/errors"
-	boshlog "github.com/cloudfoundry/bosh-agent/logger"
+	bosherr "github.com/cloudfoundry/bosh-utils/errors"
+	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 )
 
 type Factory struct {
@@ -26,7 +26,7 @@ func (f Factory) NewLog() Log {
 		device = NewTextDevice(os.Stdout)
 	default:
 		// config should be validated before using it with a factory
-		panic(bosherr.New("Unknown device type '%s'", f.config.DeviceType))
+		panic(bosherr.Errorf("Unknown device type '%s'", f.config.DeviceType))
 	}
 
 	return NewLog(device, f.logger)

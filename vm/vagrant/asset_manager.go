@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"path/filepath"
 
-	bosherr "github.com/cloudfoundry/bosh-agent/errors"
-	boshlog "github.com/cloudfoundry/bosh-agent/logger"
-	boshsys "github.com/cloudfoundry/bosh-agent/system"
+	bosherr "github.com/cloudfoundry/bosh-utils/errors"
+	boshlog "github.com/cloudfoundry/bosh-utils/logger"
+	boshsys "github.com/cloudfoundry/bosh-utils/system"
 )
 
 type AssetManager struct {
@@ -34,7 +34,7 @@ func (m AssetManager) Place(name, dstPath string) error {
 	srcPath := filepath.Join(m.rootDir, name)
 
 	if !m.fs.FileExists(srcPath) {
-		return bosherr.New("Missing asset %s at %s", name, srcPath)
+		return bosherr.Errorf("Missing asset %s at %s", name, srcPath)
 	}
 
 	tempDir, err := m.fs.TempDir("vm-AssetManager")
@@ -54,7 +54,7 @@ func (m AssetManager) Place(name, dstPath string) error {
 
 	err = m.fs.Rename(srcCopyPath, dstPath)
 	if err != nil {
-		return bosherr.WrapError(err, "Renaming asset %s to %s", name, dstPath)
+		return bosherr.WrapErrorf(err, "Renaming asset %s to %s", name, dstPath)
 	}
 
 	return nil

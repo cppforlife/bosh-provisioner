@@ -6,6 +6,11 @@ type Status interface {
 }
 
 type Service struct {
-	Monitored bool
-	Status    string
+	Name                 string
+	Monitored            bool
+	Status               string
+	Uptime               int
+	MemoryPercentTotal   float64
+	MemoryKilobytesTotal int
+	CPUPercentTotal      float64
 }

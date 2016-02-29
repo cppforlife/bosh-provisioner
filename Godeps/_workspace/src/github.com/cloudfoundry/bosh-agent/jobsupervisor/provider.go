@@ -3,12 +3,12 @@ package jobsupervisor
 import (
 	"time"
 
-	bosherr "github.com/cloudfoundry/bosh-agent/errors"
 	boshhandler "github.com/cloudfoundry/bosh-agent/handler"
 	boshmonit "github.com/cloudfoundry/bosh-agent/jobsupervisor/monit"
-	boshlog "github.com/cloudfoundry/bosh-agent/logger"
 	boshplatform "github.com/cloudfoundry/bosh-agent/platform"
 	boshdir "github.com/cloudfoundry/bosh-agent/settings/directories"
+	bosherr "github.com/cloudfoundry/bosh-utils/errors"
+	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 )
 
 type Provider struct {
@@ -19,7 +19,7 @@ func NewProvider(
 	platform boshplatform.Platform,
 	client boshmonit.Client,
 	logger boshlog.Logger,
-	dirProvider boshdir.DirectoriesProvider,
+	dirProvider boshdir.Provider,
 	handler boshhandler.Handler,
 ) (p Provider) {
 	monitJobSupervisor := NewMonitJobSupervisor(
@@ -48,7 +48,7 @@ func NewProvider(
 func (p Provider) Get(name string) (supervisor JobSupervisor, err error) {
 	supervisor, found := p.supervisors[name]
 	if !found {
-		err = bosherr.New("JobSupervisor %s could not be found", name)
+		err = bosherr.Errorf("JobSupervisor %s could not be found", name)
 	}
 	return
 }

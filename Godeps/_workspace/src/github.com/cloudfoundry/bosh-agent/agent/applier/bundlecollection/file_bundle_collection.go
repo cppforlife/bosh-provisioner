@@ -1,11 +1,11 @@
 package bundlecollection
 
 import (
-	"path/filepath"
+	"path"
 
-	bosherr "github.com/cloudfoundry/bosh-agent/errors"
-	boshlog "github.com/cloudfoundry/bosh-agent/logger"
-	boshsys "github.com/cloudfoundry/bosh-agent/system"
+	bosherr "github.com/cloudfoundry/bosh-utils/errors"
+	boshlog "github.com/cloudfoundry/bosh-utils/logger"
+	boshsys "github.com/cloudfoundry/bosh-utils/system"
 )
 
 const fileBundleCollectionLogTag = "FileBundleCollection"
@@ -16,18 +16,18 @@ type fileBundleDefinition struct {
 }
 
 func newFileBundleDefinition(installPath string) fileBundleDefinition {
-	cleanInstallPath := filepath.Clean(installPath) // no trailing slash
+	cleanInstallPath := path.Clean(installPath) // no trailing slash
 
 	// If the path is empty, Base returns ".".
 	// If the path consists entirely of separators, Base returns a single separator.
 
-	name := filepath.Base(filepath.Dir(cleanInstallPath))
-	if name == "." || name == string(filepath.Separator) {
+	name := path.Base(path.Dir(cleanInstallPath))
+	if name == "." || name == string("/") {
 		name = ""
 	}
 
-	version := filepath.Base(cleanInstallPath)
-	if version == "." || version == string(filepath.Separator) {
+	version := path.Base(cleanInstallPath)
+	if version == "." || version == string("/") {
 		version = ""
 	}
 
@@ -61,22 +61,22 @@ func NewFileBundleCollection(
 
 func (bc FileBundleCollection) Get(definition BundleDefinition) (Bundle, error) {
 	if len(definition.BundleName()) == 0 {
-		return nil, bosherr.New("Missing bundle name")
+		return nil, bosherr.Error("Missing bundle name")
 	}
 
 	if len(definition.BundleVersion()) == 0 {
-		return nil, bosherr.New("Missing bundle version")
+		return nil, bosherr.Error("Missing bundle version")
 	}
 
-	installPath := filepath.Join(bc.installPath, bc.name, definition.BundleName(), definition.BundleVersion())
-	enablePath := filepath.Join(bc.enablePath, bc.name, definition.BundleName())
+	installPath := path.Join(bc.installPath, bc.name, definition.BundleName(), definition.BundleVersion())
+	enablePath := path.Join(bc.enablePath, bc.name, definition.BundleName())
 	return NewFileBundle(installPath, enablePath, bc.fs, bc.logger), nil
 }
 
 func (bc FileBundleCollection) List() ([]Bundle, error) {
 	var bundles []Bundle
 
-	bundleInstallPaths, err := bc.fs.Glob(filepath.Join(bc.installPath, bc.name, "*", "*"))
+	bundleInstallPaths, err := bc.fs.Glob(path.Join(bc.installPath, bc.name, "*", "*"))
 	if err != nil {
 		return bundles, bosherr.WrapError(err, "Globbing bundles")
 	}

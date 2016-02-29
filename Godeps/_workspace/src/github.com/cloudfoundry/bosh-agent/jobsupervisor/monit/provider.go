@@ -4,18 +4,54 @@ import (
 	"net/http"
 	"time"
 
-	bosherr "github.com/cloudfoundry/bosh-agent/errors"
-	boshlog "github.com/cloudfoundry/bosh-agent/logger"
 	boshplatform "github.com/cloudfoundry/bosh-agent/platform"
+	bosherr "github.com/cloudfoundry/bosh-utils/errors"
+	boshhttp "github.com/cloudfoundry/bosh-utils/http"
+	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 )
 
-type clientProvider struct {
-	platform boshplatform.Platform
-	logger   boshlog.Logger
+const (
+	shortRetryStrategyAttempts = uint(20)
+	longRetryStrategyAttempts  = uint(300)
+	retryDelay                 = 1 * time.Second
+	monitHost                  = "127.0.0.1:2822"
+)
+
+type ClientProvider interface {
+	Get() (Client, error)
 }
 
-func NewProvider(platform boshplatform.Platform, logger boshlog.Logger) clientProvider {
-	return clientProvider{platform: platform, logger: logger}
+type clientProvider struct {
+	platform        boshplatform.Platform
+	logger          boshlog.Logger
+	shortHTTPClient boshhttp.Client
+	longHTTPClient  boshhttp.Client
+}
+
+func NewProvider(platform boshplatform.Platform, logger boshlog.Logger) ClientProvider {
+	httpClient := http.DefaultClient
+
+	shortHTTPClient := boshhttp.NewRetryClient(
+		httpClient,
+		shortRetryStrategyAttempts,
+		retryDelay,
+		logger,
+	)
+
+	longHTTPClient := NewMonitRetryClient(
+		httpClient,
+		longRetryStrategyAttempts,
+		shortRetryStrategyAttempts,
+		retryDelay,
+		logger,
+	)
+
+	return clientProvider{
+		platform:        platform,
+		logger:          logger,
+		shortHTTPClient: shortHTTPClient,
+		longHTTPClient:  longHTTPClient,
+	}
 }
 
 func (p clientProvider) Get() (client Client, err error) {
@@ -25,11 +61,11 @@ func (p clientProvider) Get() (client Client, err error) {
 	}
 
 	return NewHTTPClient(
-		"127.0.0.1:2822",
+		monitHost,
 		monitUser,
 		monitPassword,
-		http.DefaultClient,
-		1*time.Second,
+		p.shortHTTPClient,
+		p.longHTTPClient,
 		p.logger,
 	), nil
 }

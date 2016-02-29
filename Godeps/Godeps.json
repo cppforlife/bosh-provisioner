@@ -1,8 +1,8 @@
 {
 	"ImportPath": "github.com/cppforlife/bosh-provisioner",
-	"GoVersion": "go1.2.2",
+	"GoVersion": "go1.5.1",
 	"Packages": [
-		"github.com/cppforlife/bosh-provisioner/..."
+		"github.com/cppforlife/bosh-provisioner/main"
 	],
 	"Deps": [
 		{
@@ -21,84 +21,99 @@
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry/bosh-agent/agent/action",
-			"Rev": "7317c8f8c7322ef30926ed3b3d150a5ded95858a"
+			"Rev": "892dbcde8a0ccb431887ebae05fe5d07e362b330"
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry/bosh-agent/agent/alert",
-			"Rev": "7317c8f8c7322ef30926ed3b3d150a5ded95858a"
+			"Rev": "892dbcde8a0ccb431887ebae05fe5d07e362b330"
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry/bosh-agent/agent/applier",
-			"Rev": "7317c8f8c7322ef30926ed3b3d150a5ded95858a"
+			"Rev": "892dbcde8a0ccb431887ebae05fe5d07e362b330"
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry/bosh-agent/agent/cmdrunner",
-			"Rev": "7317c8f8c7322ef30926ed3b3d150a5ded95858a"
+			"Rev": "892dbcde8a0ccb431887ebae05fe5d07e362b330"
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry/bosh-agent/agent/compiler",
-			"Rev": "7317c8f8c7322ef30926ed3b3d150a5ded95858a"
+			"Rev": "892dbcde8a0ccb431887ebae05fe5d07e362b330"
 		},
 		{
-			"ImportPath": "github.com/cloudfoundry/bosh-agent/agent/drain",
-			"Rev": "7317c8f8c7322ef30926ed3b3d150a5ded95858a"
+			"ImportPath": "github.com/cloudfoundry/bosh-agent/agent/script",
+			"Rev": "892dbcde8a0ccb431887ebae05fe5d07e362b330"
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry/bosh-agent/agent/task",
-			"Rev": "7317c8f8c7322ef30926ed3b3d150a5ded95858a"
-		},
-		{
-			"ImportPath": "github.com/cloudfoundry/bosh-agent/blobstore",
-			"Rev": "7317c8f8c7322ef30926ed3b3d150a5ded95858a"
-		},
-		{
-			"ImportPath": "github.com/cloudfoundry/bosh-agent/errors",
-			"Rev": "7317c8f8c7322ef30926ed3b3d150a5ded95858a"
+			"Rev": "892dbcde8a0ccb431887ebae05fe5d07e362b330"
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry/bosh-agent/handler",
-			"Rev": "7317c8f8c7322ef30926ed3b3d150a5ded95858a"
+			"Rev": "892dbcde8a0ccb431887ebae05fe5d07e362b330"
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry/bosh-agent/infrastructure/devicepathresolver",
-			"Rev": "7317c8f8c7322ef30926ed3b3d150a5ded95858a"
+			"Rev": "892dbcde8a0ccb431887ebae05fe5d07e362b330"
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry/bosh-agent/jobsupervisor",
-			"Rev": "7317c8f8c7322ef30926ed3b3d150a5ded95858a"
-		},
-		{
-			"ImportPath": "github.com/cloudfoundry/bosh-agent/logger",
-			"Rev": "7317c8f8c7322ef30926ed3b3d150a5ded95858a"
+			"Rev": "892dbcde8a0ccb431887ebae05fe5d07e362b330"
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry/bosh-agent/notification",
-			"Rev": "7317c8f8c7322ef30926ed3b3d150a5ded95858a"
+			"Rev": "892dbcde8a0ccb431887ebae05fe5d07e362b330"
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry/bosh-agent/platform",
-			"Rev": "7317c8f8c7322ef30926ed3b3d150a5ded95858a"
+			"Rev": "892dbcde8a0ccb431887ebae05fe5d07e362b330"
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry/bosh-agent/settings",
-			"Rev": "7317c8f8c7322ef30926ed3b3d150a5ded95858a"
+			"Rev": "892dbcde8a0ccb431887ebae05fe5d07e362b330"
 		},
 		{
-			"ImportPath": "github.com/cloudfoundry/bosh-agent/system",
-			"Rev": "7317c8f8c7322ef30926ed3b3d150a5ded95858a"
+			"ImportPath": "github.com/cloudfoundry/bosh-agent/syslog",
+			"Rev": "892dbcde8a0ccb431887ebae05fe5d07e362b330"
 		},
 		{
-			"ImportPath": "github.com/cloudfoundry/bosh-agent/uuid",
-			"Rev": "7317c8f8c7322ef30926ed3b3d150a5ded95858a"
+			"ImportPath": "github.com/cloudfoundry/bosh-utils/blobstore",
+			"Rev": "e1bc38d772f54dac8889bbafca86aa14575e86ef"
+		},
+		{
+			"ImportPath": "github.com/cloudfoundry/bosh-utils/errors",
+			"Rev": "e1bc38d772f54dac8889bbafca86aa14575e86ef"
+		},
+		{
+			"ImportPath": "github.com/cloudfoundry/bosh-utils/fileutil",
+			"Rev": "e1bc38d772f54dac8889bbafca86aa14575e86ef"
+		},
+		{
+			"ImportPath": "github.com/cloudfoundry/bosh-utils/http",
+			"Rev": "e1bc38d772f54dac8889bbafca86aa14575e86ef"
+		},
+		{
+			"ImportPath": "github.com/cloudfoundry/bosh-utils/logger",
+			"Rev": "e1bc38d772f54dac8889bbafca86aa14575e86ef"
+		},
+		{
+			"ImportPath": "github.com/cloudfoundry/bosh-utils/retrystrategy",
+			"Rev": "e1bc38d772f54dac8889bbafca86aa14575e86ef"
+		},
+		{
+			"ImportPath": "github.com/cloudfoundry/bosh-utils/system",
+			"Rev": "e1bc38d772f54dac8889bbafca86aa14575e86ef"
+		},
+		{
+			"ImportPath": "github.com/cloudfoundry/bosh-utils/uuid",
+			"Rev": "e1bc38d772f54dac8889bbafca86aa14575e86ef"
 		},
 		{
 			"ImportPath": "github.com/cloudfoundry/gofileutils/glob",
 			"Rev": "a4a0cae5ff8a342ba01fce700b9e41c6942c0e5e"
 		},
 		{
-			"ImportPath": "github.com/cloudfoundry/gosigar",
-			"Comment": "scotty_09012012-20-ga4cb008",
-			"Rev": "a4cb00834887e549c46e58cb5d5f4e53bd492f32"
+			"ImportPath": "github.com/jeromer/syslogparser",
+			"Rev": "ff71fe7a7d5279df4b964b31f7ee4adf117277f6"
 		},
 		{
 			"ImportPath": "github.com/nu7hatch/gouuid",
@@ -106,12 +121,17 @@
 		},
 		{
 			"ImportPath": "github.com/onsi/ginkgo",
-			"Comment": "v1.0.0-28-g6481765",
-			"Rev": "6481765dda39cbaae281109e6945449642329197"
+			"Comment": "v1.1.0-41-g38caab9",
+			"Rev": "38caab951a9ff39f0e61294a1dbaaa074a39228b"
 		},
 		{
 			"ImportPath": "github.com/onsi/gomega",
-			"Rev": "4699d5a664396173c7d9fcef9e88be297c7bae13"
+			"Comment": "v1.0-71-g2152b45",
+			"Rev": "2152b45fa28a361beba9aab0885972323a444e28"
+		},
+		{
+			"ImportPath": "github.com/pivotal-golang/clock",
+			"Rev": "3fd3c1944c59d9742e1cd333672181cd1a6f9fa0"
 		},
 		{
 			"ImportPath": "github.com/pivotal/go-smtpd/smtpd",

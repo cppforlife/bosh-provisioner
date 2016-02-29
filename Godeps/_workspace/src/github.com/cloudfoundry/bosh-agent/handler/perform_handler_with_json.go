@@ -3,8 +3,8 @@ package handler
 import (
 	"encoding/json"
 
-	bosherr "github.com/cloudfoundry/bosh-agent/errors"
-	boshlog "github.com/cloudfoundry/bosh-agent/logger"
+	bosherr "github.com/cloudfoundry/bosh-utils/errors"
+	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 )
 
 const (
@@ -13,7 +13,7 @@ const (
 	UnlimitedResponseLength = -1
 )
 
-func PerformHandlerWithJSON(rawJSON []byte, handler HandlerFunc, maxResponseLength int, logger boshlog.Logger) ([]byte, Request, error) {
+func PerformHandlerWithJSON(rawJSON []byte, handler Func, maxResponseLength int, logger boshlog.Logger) ([]byte, Request, error) {
 	var request Request
 
 	err := json.Unmarshal(rawJSON, &request)
@@ -44,7 +44,7 @@ func PerformHandlerWithJSON(rawJSON []byte, handler HandlerFunc, maxResponseLeng
 }
 
 func BuildErrorWithJSON(msg string, logger boshlog.Logger) ([]byte, error) {
-	response := NewExceptionResponse(bosherr.New(msg))
+	response := NewExceptionResponse(bosherr.Error(msg))
 
 	respJSON, err := json.Marshal(response)
 	if err != nil {

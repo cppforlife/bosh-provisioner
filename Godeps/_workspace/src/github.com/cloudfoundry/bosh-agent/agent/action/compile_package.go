@@ -5,7 +5,7 @@ import (
 
 	boshmodels "github.com/cloudfoundry/bosh-agent/agent/applier/models"
 	boshcomp "github.com/cloudfoundry/bosh-agent/agent/compiler"
-	bosherr "github.com/cloudfoundry/bosh-agent/errors"
+	bosherr "github.com/cloudfoundry/bosh-utils/errors"
 )
 
 type CompilePackageAction struct {
@@ -48,7 +48,7 @@ func (a CompilePackageAction) Run(blobID, sha1, name, version string, deps boshc
 
 	uploadedBlobID, uploadedSha1, err := a.compiler.Compile(pkg, modelsDeps)
 	if err != nil {
-		err = bosherr.WrapError(err, "Compiling package %s", pkg.Name)
+		err = bosherr.WrapErrorf(err, "Compiling package %s", pkg.Name)
 		return
 	}
 

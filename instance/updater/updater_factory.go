@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	boshlog "github.com/cloudfoundry/bosh-agent/logger"
+	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 
 	bpagclient "github.com/cppforlife/bosh-provisioner/agent/client"
 	bpdep "github.com/cppforlife/bosh-provisioner/deployment"

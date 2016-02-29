@@ -12,8 +12,8 @@ import (
 	boshaction "github.com/cloudfoundry/bosh-agent/agent/action"
 	boshas "github.com/cloudfoundry/bosh-agent/agent/applier/applyspec"
 	boshcomp "github.com/cloudfoundry/bosh-agent/agent/compiler"
-	bosherr "github.com/cloudfoundry/bosh-agent/errors"
-	boshlog "github.com/cloudfoundry/bosh-agent/logger"
+	bosherr "github.com/cloudfoundry/bosh-utils/errors"
+	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 )
 
 const httpClientLogTag = "HTTPClient"
@@ -250,7 +250,7 @@ func (ac HTTPClient) makeQuickRequest(method reqMethod, args reqArgs) (responseE
 	}
 
 	if responseBody.HasException() {
-		return responseBody, bosherr.New("Ended with exception %#v", responseBody.Exception)
+		return responseBody, bosherr.Errorf("Ended with exception %#v", responseBody.Exception)
 	}
 
 	return responseBody, nil

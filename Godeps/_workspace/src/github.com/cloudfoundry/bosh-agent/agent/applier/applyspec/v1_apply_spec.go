@@ -18,7 +18,9 @@ type V1ApplySpec struct {
 	// Since default value of int is 0 use pointer
 	// to indicate that state does not have an assigned index
 	// (json.Marshal will result in null instead of 0).
-	Index *int `json:"index"`
+	Index            *int   `json:"index"`
+	NodeID           string `json:"id"`
+	AvailabilityZone string `json:"az"`
 
 	PersistentDisk int `json:"persistent_disk"`
 
@@ -74,10 +76,6 @@ func (s V1ApplySpec) MaxLogFileSize() string {
 		return fileSize
 	}
 	return "50M"
-}
-
-func (s NetworkSpec) IsDynamic() bool {
-	return s.Fields["type"] == NetworkSpecTypeDynamic
 }
 
 func (s NetworkSpec) PopulateIPInfo(ip, netmask, gateway string) NetworkSpec {

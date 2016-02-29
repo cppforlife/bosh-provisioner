@@ -2,11 +2,12 @@ package bundlecollection
 
 import (
 	"os"
+	"path"
 	"path/filepath"
 
-	bosherr "github.com/cloudfoundry/bosh-agent/errors"
-	boshlog "github.com/cloudfoundry/bosh-agent/logger"
-	boshsys "github.com/cloudfoundry/bosh-agent/system"
+	bosherr "github.com/cloudfoundry/bosh-utils/errors"
+	boshlog "github.com/cloudfoundry/bosh-utils/logger"
+	boshsys "github.com/cloudfoundry/bosh-utils/system"
 )
 
 const (
@@ -40,10 +41,10 @@ func (b FileBundle) Install(sourcePath string) (boshsys.FileSystem, string, erro
 
 	err := b.fs.Chmod(sourcePath, installDirsPerms)
 	if err != nil {
-		return nil, "", bosherr.WrapError(err, "Settting permissions on source directory")
+		return nil, "", bosherr.WrapError(err, "Setting permissions on source directory")
 	}
 
-	err = b.fs.MkdirAll(filepath.Dir(b.installPath), installDirsPerms)
+	err = b.fs.MkdirAll(path.Dir(b.installPath), installDirsPerms)
 	if err != nil {
 		return nil, "", bosherr.WrapError(err, "Creating parent installation directory")
 	}
@@ -74,7 +75,7 @@ func (b FileBundle) InstallWithoutContents() (boshsys.FileSystem, string, error)
 func (b FileBundle) GetInstallPath() (boshsys.FileSystem, string, error) {
 	path := b.installPath
 	if !b.fs.FileExists(path) {
-		return nil, "", bosherr.New("install dir does not exist")
+		return nil, "", bosherr.Error("install dir does not exist")
 	}
 
 	return b.fs, path, nil
@@ -88,7 +89,7 @@ func (b FileBundle) Enable() (boshsys.FileSystem, string, error) {
 	b.logger.Debug(fileBundleLogTag, "Enabling %v", b)
 
 	if !b.fs.FileExists(b.installPath) {
-		return nil, "", bosherr.New("bundle must be installed")
+		return nil, "", bosherr.Error("bundle must be installed")
 	}
 
 	err := b.fs.MkdirAll(filepath.Dir(b.enablePath), enableDirPerms)

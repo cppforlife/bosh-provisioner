@@ -3,9 +3,9 @@ package templatescompiler
 import (
 	"path/filepath"
 
-	bosherr "github.com/cloudfoundry/bosh-agent/errors"
-	boshlog "github.com/cloudfoundry/bosh-agent/logger"
-	boshsys "github.com/cloudfoundry/bosh-agent/system"
+	bosherr "github.com/cloudfoundry/bosh-utils/errors"
+	boshlog "github.com/cloudfoundry/bosh-utils/logger"
+	boshsys "github.com/cloudfoundry/bosh-utils/system"
 
 	bpdep "github.com/cppforlife/bosh-provisioner/deployment"
 	bperb "github.com/cppforlife/bosh-provisioner/instance/templatescompiler/erbrenderer"
@@ -62,7 +62,7 @@ func (rac RenderedArchivesCompiler) Compile(relJobs []bpreljob.Job, instance bpd
 
 			err := renderer.Render(template.Path, dstPath)
 			if err != nil {
-				return "", bosherr.WrapError(err, "Rendering %s ERB", template.DstPathEnd)
+				return "", bosherr.WrapErrorf(err, "Rendering %s ERB", template.DstPathEnd)
 			}
 		}
 	}
