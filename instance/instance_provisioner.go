@@ -1,8 +1,8 @@
 package instance
 
 import (
-	bosherr "github.com/cloudfoundry/bosh-agent/errors"
-	boshlog "github.com/cloudfoundry/bosh-agent/logger"
+	bosherr "github.com/cloudfoundry/bosh-utils/errors"
+	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 
 	bpagclient "github.com/cppforlife/bosh-provisioner/agent/client"
 	bpdep "github.com/cppforlife/bosh-provisioner/deployment"
@@ -33,7 +33,7 @@ func (p Provisioner) Provision(ac bpagclient.Client, job bpdep.Job, depInstance 
 
 	err := updater.SetUp()
 	if err != nil {
-		return Instance{}, bosherr.WrapError(err, "Updating instance %d", depInstance.Index)
+		return Instance{}, bosherr.WrapErrorf(err, "Updating instance %d", depInstance.Index)
 	}
 
 	return NewInstance(updater, job, depInstance, p.logger), nil

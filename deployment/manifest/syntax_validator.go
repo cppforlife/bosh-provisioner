@@ -1,7 +1,7 @@
 package manifest
 
 import (
-	bosherr "github.com/cloudfoundry/bosh-agent/errors"
+	bosherr "github.com/cloudfoundry/bosh-utils/errors"
 
 	bputil "github.com/cppforlife/bosh-provisioner/util"
 )
@@ -24,7 +24,7 @@ func NewSyntaxValidator(manifest *Manifest) SyntaxValidator {
 
 func (v SyntaxValidator) Validate() error {
 	if v.deployment.Name == "" {
-		return bosherr.New("Missing deployment name")
+		return bosherr.Error("Missing deployment name")
 	}
 
 	err := v.validateUpdate(&v.deployment.Update)
@@ -35,14 +35,14 @@ func (v SyntaxValidator) Validate() error {
 	for i, net := range v.deployment.Networks {
 		err := v.validateNetwork(&v.deployment.Networks[i])
 		if err != nil {
-			return bosherr.WrapError(err, "Network %s (%d)", net.Name, i)
+			return bosherr.WrapErrorf(err, "Network %s (%d)", net.Name, i)
 		}
 	}
 
 	for i, release := range v.deployment.Releases {
 		err := v.validateRelease(&v.deployment.Releases[i])
 		if err != nil {
-			return bosherr.WrapError(err, "Release %s (%d)", release.Name, i)
+			return bosherr.WrapErrorf(err, "Release %s (%d)", release.Name, i)
 		}
 	}
 
@@ -54,7 +54,7 @@ func (v SyntaxValidator) Validate() error {
 	for i, job := range v.deployment.Jobs {
 		err := v.validateJob(&v.deployment.Jobs[i])
 		if err != nil {
-			return bosherr.WrapError(err, "Job %s (%d)", job.Name, i)
+			return bosherr.WrapErrorf(err, "Job %s (%d)", job.Name, i)
 		}
 	}
 
@@ -70,7 +70,7 @@ func (v SyntaxValidator) Validate() error {
 
 func (v SyntaxValidator) validateNetwork(network *Network) error {
 	if network.Name == "" {
-		return bosherr.New("Missing network name")
+		return bosherr.Error("Missing network name")
 	}
 
 	return v.validateNetworkType(network.Type)
@@ -78,7 +78,7 @@ func (v SyntaxValidator) validateNetwork(network *Network) error {
 
 func (v SyntaxValidator) validateNetworkType(networkType string) error {
 	if networkType == "" {
-		return bosherr.New("Missing network type")
+		return bosherr.Error("Missing network type")
 	}
 
 	for _, t := range NetworkTypes {
@@ -87,20 +87,20 @@ func (v SyntaxValidator) validateNetworkType(networkType string) error {
 		}
 	}
 
-	return bosherr.New("Unknown network type %s", networkType)
+	return bosherr.Errorf("Unknown network type %s", networkType)
 }
 
 func (v SyntaxValidator) validateRelease(release *Release) error {
 	if release.Name == "" {
-		return bosherr.New("Missing release name")
+		return bosherr.Error("Missing release name")
 	}
 
 	if release.Version == "" {
-		return bosherr.New("Missing release version")
+		return bosherr.Error("Missing release version")
 	}
 
 	if release.URL == "" {
-		return bosherr.New("Missing release URL")
+		return bosherr.Error("Missing release URL")
 	}
 
 	return nil
@@ -108,7 +108,7 @@ func (v SyntaxValidator) validateRelease(release *Release) error {
 
 func (v SyntaxValidator) validateCompilation(compilation *Compilation) error {
 	if compilation.NetworkName == "" {
-		return bosherr.New("Missing network name")
+		return bosherr.Error("Missing network name")
 	}
 
 	return nil
@@ -116,11 +116,11 @@ func (v SyntaxValidator) validateCompilation(compilation *Compilation) error {
 
 func (v SyntaxValidator) validateJob(job *Job) error {
 	if job.Name == "" {
-		return bosherr.New("Missing job name")
+		return bosherr.Error("Missing job name")
 	}
 
 	if job.Template != nil {
-		return bosherr.New("'template' is deprecated in favor of 'templates'")
+		return bosherr.Error("'template' is deprecated in favor of 'templates'")
 	}
 
 	err := v.validateUpdate(&job.Update)
@@ -138,7 +138,7 @@ func (v SyntaxValidator) validateJob(job *Job) error {
 	for i, na := range job.NetworkAssociations {
 		err := v.validateNetworkAssociation(&job.NetworkAssociations[i])
 		if err != nil {
-			return bosherr.WrapError(err, "Network association %s (%d)", na.NetworkName, i)
+			return bosherr.WrapErrorf(err, "Network association %s (%d)", na.NetworkName, i)
 		}
 	}
 
@@ -170,7 +170,7 @@ func (v SyntaxValidator) validateUpdate(update *Update) error {
 
 func (v SyntaxValidator) validateNetworkAssociation(na *NetworkAssociation) error {
 	if na.NetworkName == "" {
-		return bosherr.New("Missing network name")
+		return bosherr.Error("Missing network name")
 	}
 
 	if na.StaticIPsRaw != nil {

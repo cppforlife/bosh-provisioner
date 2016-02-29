@@ -3,15 +3,15 @@ package disk
 import (
 	"strings"
 
-	bosherr "github.com/cloudfoundry/bosh-agent/errors"
-	boshsys "github.com/cloudfoundry/bosh-agent/system"
+	bosherr "github.com/cloudfoundry/bosh-utils/errors"
+	boshsys "github.com/cloudfoundry/bosh-utils/system"
 )
 
 type procMountsSearcher struct {
 	fs boshsys.FileSystem
 }
 
-func NewProcMountsSearcher(fs boshsys.FileSystem) procMountsSearcher {
+func NewProcMountsSearcher(fs boshsys.FileSystem) MountsSearcher {
 	return procMountsSearcher{fs}
 }
 

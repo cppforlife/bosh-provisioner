@@ -3,9 +3,9 @@ package release
 import (
 	"path/filepath"
 
-	bosherr "github.com/cloudfoundry/bosh-agent/errors"
-	boshlog "github.com/cloudfoundry/bosh-agent/logger"
-	boshsys "github.com/cloudfoundry/bosh-agent/system"
+	bosherr "github.com/cloudfoundry/bosh-utils/errors"
+	boshlog "github.com/cloudfoundry/bosh-utils/logger"
+	boshsys "github.com/cloudfoundry/bosh-utils/system"
 
 	bprelman "github.com/cppforlife/bosh-provisioner/release/manifest"
 )
@@ -50,7 +50,7 @@ func (r DirReader) Read() (Release, error) {
 
 	manifestPath := r.pathThatExistsOrEmpty(oldManifestPath, migratedManifestPath)
 	if len(manifestPath) == 0 {
-		return release, bosherr.New(
+		return release, bosherr.Errorf(
 			"Manifest not found at '%s' or '%s'",
 			oldManifestPath,
 			migratedManifestPath,

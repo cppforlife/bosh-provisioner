@@ -3,8 +3,8 @@ package net
 import (
 	"strings"
 
-	bosherr "github.com/cloudfoundry/bosh-agent/errors"
-	boshsys "github.com/cloudfoundry/bosh-agent/system"
+	bosherr "github.com/cloudfoundry/bosh-utils/errors"
+	boshsys "github.com/cloudfoundry/bosh-utils/system"
 )
 
 // cmdRoutesSearcher uses `route -n` command to list routes
@@ -13,7 +13,7 @@ type cmdRoutesSearcher struct {
 	runner boshsys.CmdRunner
 }
 
-func NewCmdRoutesSearcher(runner boshsys.CmdRunner) cmdRoutesSearcher {
+func NewCmdRoutesSearcher(runner boshsys.CmdRunner) RoutesSearcher {
 	return cmdRoutesSearcher{runner}
 }
 

@@ -1,17 +1,21 @@
 package fakes
 
 import (
+	"path"
+
 	boshdpresolv "github.com/cloudfoundry/bosh-agent/infrastructure/devicepathresolver"
 	fakedpresolv "github.com/cloudfoundry/bosh-agent/infrastructure/devicepathresolver/fakes"
-	boshlog "github.com/cloudfoundry/bosh-agent/logger"
-	boshcmd "github.com/cloudfoundry/bosh-agent/platform/commands"
-	fakecmd "github.com/cloudfoundry/bosh-agent/platform/commands/fakes"
+	boshcert "github.com/cloudfoundry/bosh-agent/platform/cert"
+	fakecert "github.com/cloudfoundry/bosh-agent/platform/cert/fakes"
 	boshvitals "github.com/cloudfoundry/bosh-agent/platform/vitals"
 	fakevitals "github.com/cloudfoundry/bosh-agent/platform/vitals/fakes"
 	boshsettings "github.com/cloudfoundry/bosh-agent/settings"
 	boshdir "github.com/cloudfoundry/bosh-agent/settings/directories"
-	boshsys "github.com/cloudfoundry/bosh-agent/system"
-	fakesys "github.com/cloudfoundry/bosh-agent/system/fakes"
+	boshcmd "github.com/cloudfoundry/bosh-utils/fileutil"
+	fakecmd "github.com/cloudfoundry/bosh-utils/fileutil/fakes"
+	boshlog "github.com/cloudfoundry/bosh-utils/logger"
+	boshsys "github.com/cloudfoundry/bosh-utils/system"
+	fakesys "github.com/cloudfoundry/bosh-utils/system/fakes"
 )
 
 type FakePlatform struct {
@@ -20,6 +24,7 @@ type FakePlatform struct {
 	FakeCompressor    *fakecmd.FakeCompressor
 	FakeCopier        *fakecmd.FakeCopier
 	FakeVitalsService *fakevitals.FakeService
+	fsType            string
 	logger            boshlog.Logger
 
 	DevicePathResolver boshdpresolv.DevicePathResolver
@@ -47,41 +52,59 @@ type FakePlatform struct {
 	SetupEphemeralDiskWithPathDevicePath string
 	SetupEphemeralDiskWithPathErr        error
 
+	SetupRawEphemeralDisksDevices   []boshsettings.DiskSettings
+	SetupRawEphemeralDisksErr       error
+	SetupRawEphemeralDisksCallCount int
+
 	SetupDataDirCalled bool
 	SetupDataDirErr    error
 
 	SetupTmpDirCalled bool
 	SetupTmpDirErr    error
 
-	SetupManualNetworkingNetworks boshsettings.Networks
-
-	SetupDhcpNetworks boshsettings.Networks
-	SetupDhcpErr      error
+	SetupNetworkingCalled   bool
+	SetupNetworkingNetworks boshsettings.Networks
+	SetupNetworkingErr      error
 
 	MountPersistentDiskCalled     bool
-	MountPersistentDiskDevicePath string
+	MountPersistentDiskSettings   boshsettings.DiskSettings
 	MountPersistentDiskMountPoint string
 	MountPersistentDiskErr        error
 
 	UnmountPersistentDiskDidUnmount bool
-	UnmountPersistentDiskDevicePath string
+	UnmountPersistentDiskSettings   boshsettings.DiskSettings
 
-	GetFileContentsFromCDROMPath     string
-	GetFileContentsFromCDROMContents []byte
+	GetFileContentsFromCDROMPath        string
+	GetFileContentsFromCDROMContents    []byte
+	GetFileContentsFromCDROMErr         error
+	GetFileContentsFromCDROMCalledTimes int
 
-	NormalizeDiskPathCalled   bool
-	NormalizeDiskPathPath     string
-	NormalizeDiskPathFound    bool
-	NormalizeDiskPathRealPath string
+	GetFileContentsFromDiskDiskPaths   []string
+	GetFileContentsFromDiskFileNames   [][]string
+	GetFileContentsFromDiskContents    map[string][]byte
+	GetFileContentsFromDiskErrs        map[string]error
+	GetFileContentsFromDiskCalledTimes int
+
+	GetEphemeralDiskPathCalled   bool
+	GetEphemeralDiskPathSettings boshsettings.DiskSettings
+	GetEphemeralDiskPathRealPath string
 
 	ScsiDiskMap map[string]string
 
 	MigratePersistentDiskFromMountPoint string
 	MigratePersistentDiskToMountPoint   string
 
-	IsMountPointPath   string
-	IsMountPointResult bool
-	IsMountPointErr    error
+	IsPersistentDiskMountableResult bool
+	IsPersistentDiskMountableErr    error
+
+	IsMountPointPath          string
+	IsMountPointPartitionPath string
+	IsMountPointResult        bool
+	IsMountPointErr           error
+
+	PackageFileListPath    string
+	IsRemoveDevToolsCalled bool
+	IsRemoveDevToolsError  error
 
 	MountedDevicePaths []string
 
@@ -93,9 +116,22 @@ type FakePlatform struct {
 	PrepareForNetworkingChangeCalled bool
 	PrepareForNetworkingChangeErr    error
 
-	GetDefaultNetworkCalled  bool
 	GetDefaultNetworkNetwork boshsettings.Network
 	GetDefaultNetworkErr     error
+
+	GetConfiguredNetworkInterfacesInterfaces []string
+	GetConfiguredNetworkInterfacesErr        error
+
+	CleanedIPMacAddressCache  string
+	CleanIPMacAddressCacheErr error
+
+	certManager boshcert.Manager
+
+	GetHostPublicKeyValue string
+	GetHostPublicKeyError error
+
+	SetupRootDiskCalledTimes int
+	SetupRootDiskError       error
 }
 
 func NewFakePlatform() (platform *FakePlatform) {
@@ -110,11 +146,27 @@ func NewFakePlatform() (platform *FakePlatform) {
 	platform.SetupSSHPublicKeys = make(map[string]string)
 	platform.UserPasswords = make(map[string]string)
 	platform.ScsiDiskMap = make(map[string]string)
+	platform.GetFileContentsFromDiskDiskPaths = []string{}
+	platform.GetFileContentsFromDiskFileNames = [][]string{}
+	platform.GetFileContentsFromDiskContents = map[string][]byte{}
+	platform.GetFileContentsFromDiskErrs = map[string]error{}
+	platform.certManager = new(fakecert.FakeManager)
+	platform.SetupRawEphemeralDisksCallCount = 0
+	platform.SetupRawEphemeralDisksDevices = nil
+	platform.SetupRawEphemeralDisksErr = nil
+	platform.GetHostPublicKeyError = nil
+	platform.SetupRootDiskCalledTimes = 0
+	platform.SetupRootDiskError = nil
+	platform.IsPersistentDiskMountableErr = nil
 	return
 }
 
 func (p *FakePlatform) GetFs() (fs boshsys.FileSystem) {
 	return p.Fs
+}
+
+func (p *FakePlatform) GetPersistentDiskFS() (fsType string) {
+	return p.fsType
 }
 
 func (p *FakePlatform) GetRunner() (runner boshsys.CmdRunner) {
@@ -129,8 +181,8 @@ func (p *FakePlatform) GetCopier() (copier boshcmd.Copier) {
 	return p.FakeCopier
 }
 
-func (p *FakePlatform) GetDirProvider() (dirProvider boshdir.DirectoriesProvider) {
-	return boshdir.NewDirectoriesProvider("/var/vcap")
+func (p *FakePlatform) GetDirProvider() (dirProvider boshdir.Provider) {
+	return boshdir.NewProvider("/var/vcap")
 }
 
 func (p *FakePlatform) GetVitalsService() (service boshvitals.Service) {
@@ -139,11 +191,6 @@ func (p *FakePlatform) GetVitalsService() (service boshvitals.Service) {
 
 func (p *FakePlatform) GetDevicePathResolver() (devicePathResolver boshdpresolv.DevicePathResolver) {
 	return p.DevicePathResolver
-}
-
-func (p *FakePlatform) SetDevicePathResolver(devicePathResolver boshdpresolv.DevicePathResolver) (err error) {
-	p.DevicePathResolver = devicePathResolver
-	return
 }
 
 func (p *FakePlatform) SetupRuntimeConfiguration() (err error) {
@@ -168,6 +215,14 @@ func (p *FakePlatform) DeleteEphemeralUsersMatching(regex string) (err error) {
 	return
 }
 
+func (p *FakePlatform) SetupRootDisk(ephemeralDiskPath string) (err error) {
+	p.SetupRootDiskCalledTimes++
+	if p.SetupRootDiskError != nil {
+		err = p.SetupRootDiskError
+	}
+	return
+}
+
 func (p *FakePlatform) SetupSSH(publicKey, username string) error {
 	p.SetupSSHCalled = true
 	p.SetupSSHPublicKeys[username] = publicKey
@@ -186,14 +241,18 @@ func (p *FakePlatform) SetupHostname(hostname string) (err error) {
 	return
 }
 
-func (p *FakePlatform) SetupDhcp(networks boshsettings.Networks) (err error) {
-	p.SetupDhcpNetworks = networks
-	return p.SetupDhcpErr
+func (p *FakePlatform) SetupNetworking(networks boshsettings.Networks) error {
+	p.SetupNetworkingCalled = true
+	p.SetupNetworkingNetworks = networks
+	return p.SetupNetworkingErr
 }
 
-func (p *FakePlatform) SetupManualNetworking(networks boshsettings.Networks) (err error) {
-	p.SetupManualNetworkingNetworks = networks
-	return
+func (p *FakePlatform) GetConfiguredNetworkInterfaces() ([]string, error) {
+	return p.GetConfiguredNetworkInterfacesInterfaces, p.GetConfiguredNetworkInterfacesErr
+}
+
+func (p *FakePlatform) GetCertManager() (certManager boshcert.Manager) {
+	return p.certManager
 }
 
 func (p *FakePlatform) SetupLogrotate(groupName, basePath, size string) (err error) {
@@ -210,6 +269,12 @@ func (p *FakePlatform) SetupEphemeralDiskWithPath(devicePath string) (err error)
 	return p.SetupEphemeralDiskWithPathErr
 }
 
+func (p *FakePlatform) SetupRawEphemeralDisks(devices []boshsettings.DiskSettings) (err error) {
+	p.SetupRawEphemeralDisksDevices = devices
+	p.SetupRawEphemeralDisksCallCount++
+	return p.SetupRawEphemeralDisksErr
+}
+
 func (p *FakePlatform) SetupDataDir() error {
 	p.SetupDataDirCalled = true
 	return p.SetupDataDirErr
@@ -220,31 +285,54 @@ func (p *FakePlatform) SetupTmpDir() error {
 	return p.SetupTmpDirErr
 }
 
-func (p *FakePlatform) MountPersistentDisk(devicePath, mountPoint string) (err error) {
+func (p *FakePlatform) MountPersistentDisk(diskSettings boshsettings.DiskSettings, mountPoint string) (err error) {
 	p.MountPersistentDiskCalled = true
-	p.MountPersistentDiskDevicePath = devicePath
+	p.MountPersistentDiskSettings = diskSettings
 	p.MountPersistentDiskMountPoint = mountPoint
 	return p.MountPersistentDiskErr
 }
 
-func (p *FakePlatform) UnmountPersistentDisk(devicePath string) (didUnmount bool, err error) {
-	p.UnmountPersistentDiskDevicePath = devicePath
+func (p *FakePlatform) UnmountPersistentDisk(diskSettings boshsettings.DiskSettings) (didUnmount bool, err error) {
+	p.UnmountPersistentDiskSettings = diskSettings
 	didUnmount = p.UnmountPersistentDiskDidUnmount
 	return
 }
 
-func (p *FakePlatform) NormalizeDiskPath(devicePath string) (realPath string, found bool) {
-	p.NormalizeDiskPathCalled = true
-	p.NormalizeDiskPathPath = devicePath
-	realPath = p.NormalizeDiskPathRealPath
-	found = p.NormalizeDiskPathFound
-	return
+func (p *FakePlatform) GetEphemeralDiskPath(diskSettings boshsettings.DiskSettings) string {
+	p.GetEphemeralDiskPathCalled = true
+	p.GetEphemeralDiskPathSettings = diskSettings
+	return p.GetEphemeralDiskPathRealPath
 }
 
-func (p *FakePlatform) GetFileContentsFromCDROM(path string) (contents []byte, err error) {
+func (p *FakePlatform) GetFileContentsFromCDROM(path string) ([]byte, error) {
+	p.GetFileContentsFromCDROMCalledTimes++
 	p.GetFileContentsFromCDROMPath = path
-	contents = p.GetFileContentsFromCDROMContents
-	return
+	return p.GetFileContentsFromCDROMContents, p.GetFileContentsFromCDROMErr
+}
+
+func (p *FakePlatform) GetFilesContentsFromDisk(diskPath string, fileNames []string) ([][]byte, error) {
+	p.GetFileContentsFromDiskCalledTimes++
+
+	p.GetFileContentsFromDiskDiskPaths = append(p.GetFileContentsFromDiskDiskPaths, diskPath)
+	p.GetFileContentsFromDiskFileNames = append(p.GetFileContentsFromDiskFileNames, fileNames)
+
+	result := [][]byte{}
+	for _, fileName := range fileNames {
+		fileDiskPath := path.Join(diskPath, fileName)
+		err := p.GetFileContentsFromDiskErrs[fileDiskPath]
+		if err != nil {
+			return [][]byte{}, err
+		}
+
+		result = append(result, p.GetFileContentsFromDiskContents[fileDiskPath])
+	}
+
+	return result, nil
+}
+
+func (p *FakePlatform) SetGetFilesContentsFromDisk(fileName string, contents []byte, err error) {
+	p.GetFileContentsFromDiskContents[fileName] = contents
+	p.GetFileContentsFromDiskErrs[fileName] = err
 }
 
 func (p *FakePlatform) MigratePersistentDisk(fromMountPoint, toMountPoint string) (err error) {
@@ -253,18 +341,27 @@ func (p *FakePlatform) MigratePersistentDisk(fromMountPoint, toMountPoint string
 	return
 }
 
-func (p *FakePlatform) IsMountPoint(path string) (bool, error) {
+func (p *FakePlatform) IsMountPoint(path string) (string, bool, error) {
 	p.IsMountPointPath = path
-	return p.IsMountPointResult, p.IsMountPointErr
+	return p.IsMountPointPartitionPath, p.IsMountPointResult, p.IsMountPointErr
 }
 
-func (p *FakePlatform) IsPersistentDiskMounted(path string) (result bool, err error) {
+func (p *FakePlatform) IsPersistentDiskMounted(diskSettings boshsettings.DiskSettings) (result bool, err error) {
 	for _, mountedPath := range p.MountedDevicePaths {
-		if mountedPath == path {
+		if mountedPath == diskSettings.Path {
 			return true, nil
 		}
 	}
 	return
+}
+
+func (p *FakePlatform) SetIsPersistentDiskMountable(isPartitioned bool, err error) {
+	p.IsPersistentDiskMountableResult = isPartitioned
+	p.IsPersistentDiskMountableErr = err
+}
+
+func (p *FakePlatform) IsPersistentDiskMountable(diskSettings boshsettings.DiskSettings) (bool, error) {
+	return p.IsPersistentDiskMountableResult, p.IsPersistentDiskMountableErr
 }
 
 func (p *FakePlatform) StartMonit() (err error) {
@@ -283,12 +380,26 @@ func (p *FakePlatform) GetMonitCredentials() (username, password string, err err
 	return
 }
 
+func (p *FakePlatform) CleanIPMacAddressCache(ip string) error {
+	p.CleanedIPMacAddressCache = ip
+	return p.CleanIPMacAddressCacheErr
+}
+
 func (p *FakePlatform) PrepareForNetworkingChange() error {
 	p.PrepareForNetworkingChangeCalled = true
 	return p.PrepareForNetworkingChangeErr
 }
 
 func (p *FakePlatform) GetDefaultNetwork() (boshsettings.Network, error) {
-	p.GetDefaultNetworkCalled = true
 	return p.GetDefaultNetworkNetwork, p.GetDefaultNetworkErr
+}
+
+func (p *FakePlatform) GetHostPublicKey() (string, error) {
+	return p.GetHostPublicKeyValue, p.GetHostPublicKeyError
+}
+
+func (p *FakePlatform) RemoveDevTools(packageFileListPath string) error {
+	p.IsRemoveDevToolsCalled = true
+	p.PackageFileListPath = packageFileListPath
+	return p.IsRemoveDevToolsError
 }

@@ -4,22 +4,29 @@ import (
 	boshsettings "github.com/cloudfoundry/bosh-agent/settings"
 )
 
-type FakeNetManager struct {
+type FakeManager struct {
 	FakeDefaultNetworkResolver
 
-	SetupManualNetworkingNetworks boshsettings.Networks
-	SetupManualNetworkingErr      error
+	SetupNetworkingNetworks boshsettings.Networks
+	SetupNetworkingErr      error
+
+	GetConfiguredNetworkInterfacesInterfaces []string
+	GetConfiguredNetworkInterfacesErr        error
 
 	SetupDhcpNetworks boshsettings.Networks
 	SetupDhcpErr      error
 }
 
-func (net *FakeNetManager) SetupManualNetworking(networks boshsettings.Networks, errCh chan error) error {
-	net.SetupManualNetworkingNetworks = networks
-	return net.SetupManualNetworkingErr
+func (net *FakeManager) SetupNetworking(networks boshsettings.Networks, errCh chan error) error {
+	net.SetupNetworkingNetworks = networks
+	return net.SetupNetworkingErr
 }
 
-func (net *FakeNetManager) SetupDhcp(networks boshsettings.Networks, errCh chan error) error {
+func (net *FakeManager) GetConfiguredNetworkInterfaces() ([]string, error) {
+	return net.GetConfiguredNetworkInterfacesInterfaces, net.GetConfiguredNetworkInterfacesErr
+}
+
+func (net *FakeManager) SetupDhcp(networks boshsettings.Networks, errCh chan error) error {
 	net.SetupDhcpNetworks = networks
 	return net.SetupDhcpErr
 }

@@ -7,39 +7,45 @@ import (
 	"net/url"
 	"path"
 	"strings"
-	"time"
 
 	"code.google.com/p/go-charset/charset"
 	_ "code.google.com/p/go-charset/data" // translations between char sets
 
-	bosherr "github.com/cloudfoundry/bosh-agent/errors"
-	boshlog "github.com/cloudfoundry/bosh-agent/logger"
+	bosherr "github.com/cloudfoundry/bosh-utils/errors"
+	boshhttp "github.com/cloudfoundry/bosh-utils/http"
+	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 )
 
 type httpClient struct {
-	host                string
-	username            string
-	password            string
-	retryAttempts       int
-	delayBetweenRetries time.Duration
-	client              HTTPClient
-	logger              boshlog.Logger
+	startClient     boshhttp.Client
+	stopClient      boshhttp.Client
+	unmonitorClient boshhttp.Client
+	statusClient    boshhttp.Client
+	host            string
+	username        string
+	password        string
+	logger          boshlog.Logger
 }
 
+// NewHTTPClient creates a new monit client
+//
+// status & start use the shortClient
+// unmonitor & stop use the longClient
 func NewHTTPClient(
 	host, username, password string,
-	client HTTPClient,
-	delayBetweenRetries time.Duration,
+	shortClient boshhttp.Client,
+	longClient boshhttp.Client,
 	logger boshlog.Logger,
-) httpClient {
+) Client {
 	return httpClient{
-		host:                host,
-		username:            username,
-		password:            password,
-		client:              client,
-		retryAttempts:       20,
-		delayBetweenRetries: delayBetweenRetries,
-		logger:              logger,
+		host:            host,
+		username:        username,
+		password:        password,
+		startClient:     shortClient,
+		stopClient:      longClient,
+		unmonitorClient: longClient,
+		statusClient:    shortClient,
+		logger:          logger,
 	}
 }
 
@@ -57,49 +63,61 @@ func (c httpClient) ServicesInGroup(name string) (services []string, err error) 
 	return serviceGroup.Services, nil
 }
 
-func (c httpClient) StartService(serviceName string) (err error) {
-	response, err := c.makeRequest(c.monitURL(serviceName), "POST", "action=start")
+func (c httpClient) StartService(serviceName string) error {
+	response, err := c.makeRequest(c.startClient, c.monitURL(serviceName), "POST", "action=start")
 	if err != nil {
 		return bosherr.WrapError(err, "Sending start request to monit")
 	}
 
-	defer response.Body.Close()
+	defer func() {
+		if err := response.Body.Close(); err != nil {
+			c.logger.Warn("http-client", "Failed to close monit start POST response body: %s", err.Error())
+		}
+	}()
 
 	err = c.validateResponse(response)
 	if err != nil {
-		return bosherr.WrapError(err, "Starting Monit service %s", serviceName)
+		return bosherr.WrapErrorf(err, "Starting Monit service %s", serviceName)
 	}
 
 	return nil
 }
 
 func (c httpClient) StopService(serviceName string) error {
-	response, err := c.makeRequest(c.monitURL(serviceName), "POST", "action=stop")
+	response, err := c.makeRequest(c.stopClient, c.monitURL(serviceName), "POST", "action=stop")
 	if err != nil {
 		return bosherr.WrapError(err, "Sending stop request to monit")
 	}
 
-	defer response.Body.Close()
+	defer func() {
+		if err := response.Body.Close(); err != nil {
+			c.logger.Warn("http-client", "Failed to close monit stop POST response body: %s", err.Error())
+		}
+	}()
 
 	err = c.validateResponse(response)
 	if err != nil {
-		return bosherr.WrapError(err, "Stopping Monit service %s", serviceName)
+		return bosherr.WrapErrorf(err, "Stopping Monit service %s", serviceName)
 	}
 
 	return nil
 }
 
 func (c httpClient) UnmonitorService(serviceName string) error {
-	response, err := c.makeRequest(c.monitURL(serviceName), "POST", "action=unmonitor")
+	response, err := c.makeRequest(c.unmonitorClient, c.monitURL(serviceName), "POST", "action=unmonitor")
 	if err != nil {
 		return bosherr.WrapError(err, "Sending unmonitor request to monit")
 	}
 
-	defer response.Body.Close()
+	defer func() {
+		if err := response.Body.Close(); err != nil {
+			c.logger.Warn("http-client", "Failed to close monit unmonitor POST response body: %s", err.Error())
+		}
+	}()
 
 	err = c.validateResponse(response)
 	if err != nil {
-		return bosherr.WrapError(err, "Unmonitoring Monit service %s", serviceName)
+		return bosherr.WrapErrorf(err, "Unmonitoring Monit service %s", serviceName)
 	}
 
 	return nil
@@ -110,15 +128,20 @@ func (c httpClient) Status() (Status, error) {
 }
 
 func (c httpClient) status() (status, error) {
+	c.logger.Debug("http-client", "status function called")
 	url := c.monitURL("/_status2")
 	url.RawQuery = "format=xml"
 
-	response, err := c.makeRequest(url, "GET", "")
+	response, err := c.makeRequest(c.statusClient, url, "GET", "")
 	if err != nil {
 		return status{}, bosherr.WrapError(err, "Sending status request to monit")
 	}
 
-	defer response.Body.Close()
+	defer func() {
+		if err := response.Body.Close(); err != nil {
+			c.logger.Warn("http-client", "Failed to close monit status GET response body: %s", err.Error())
+		}
+	}()
 
 	err = c.validateResponse(response)
 	if err != nil {
@@ -156,43 +179,22 @@ func (c httpClient) validateResponse(response *http.Response) error {
 		return bosherr.WrapError(err, "Reading body of failed Monit response")
 	}
 
-	return bosherr.New("Request failed with %s: %s", response.Status, string(body))
+	c.logger.Debug("http-client", "Request failed with %s: %s", response.Status, string(body))
+
+	return bosherr.Errorf("Request failed with %s: %s", response.Status, string(body))
 }
 
-func (c httpClient) makeRequest(url url.URL, method, requestBody string) (response *http.Response, err error) {
-	c.logger.Debug("http-client", "makeRequest with url %s", url.String())
+func (c httpClient) makeRequest(client boshhttp.Client, target url.URL, method, requestBody string) (*http.Response, error) {
+	c.logger.Debug("http-client", "Monit request: url='%s' body='%s'", target.String(), requestBody)
 
-	for attempt := 0; attempt < c.retryAttempts; attempt++ {
-		c.logger.Debug("http-client", "Retrying %d", attempt)
-
-		if response != nil {
-			response.Body.Close()
-		}
-
-		var request *http.Request
-
-		request, err = http.NewRequest(method, url.String(), strings.NewReader(requestBody))
-		if err != nil {
-			return
-		}
-
-		request.SetBasicAuth(c.username, c.password)
-
-		request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-
-		response, err = c.client.Do(request)
-		if response != nil {
-			c.logger.Debug("http-client", "Got response with status %d", response.StatusCode)
-		}
-
-		if err != nil {
-			c.logger.Debug("http-client", "Got err %v", err)
-		} else if response.StatusCode == 200 {
-			return
-		}
-
-		time.Sleep(c.delayBetweenRetries)
+	request, err := http.NewRequest(method, target.String(), strings.NewReader(requestBody))
+	if err != nil {
+		return nil, err
 	}
 
-	return
+	request.SetBasicAuth(c.username, c.password)
+
+	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	return client.Do(request)
 }

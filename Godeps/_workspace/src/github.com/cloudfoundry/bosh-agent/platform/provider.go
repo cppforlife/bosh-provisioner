@@ -3,22 +3,22 @@ package platform
 import (
 	"time"
 
-	sigar "github.com/cloudfoundry/gosigar"
-
-	bosherror "github.com/cloudfoundry/bosh-agent/errors"
-	boshlog "github.com/cloudfoundry/bosh-agent/logger"
+	"github.com/cloudfoundry/bosh-agent/infrastructure/devicepathresolver"
 	boshcdrom "github.com/cloudfoundry/bosh-agent/platform/cdrom"
-	boshudev "github.com/cloudfoundry/bosh-agent/platform/cdrom/udevdevice"
-	boshcd "github.com/cloudfoundry/bosh-agent/platform/cdutil"
-	boshcmd "github.com/cloudfoundry/bosh-agent/platform/commands"
+	boshcert "github.com/cloudfoundry/bosh-agent/platform/cert"
 	boshdisk "github.com/cloudfoundry/bosh-agent/platform/disk"
 	boshnet "github.com/cloudfoundry/bosh-agent/platform/net"
 	bosharp "github.com/cloudfoundry/bosh-agent/platform/net/arp"
 	boship "github.com/cloudfoundry/bosh-agent/platform/net/ip"
 	boshstats "github.com/cloudfoundry/bosh-agent/platform/stats"
+	boshudev "github.com/cloudfoundry/bosh-agent/platform/udevdevice"
 	boshvitals "github.com/cloudfoundry/bosh-agent/platform/vitals"
 	boshdirs "github.com/cloudfoundry/bosh-agent/settings/directories"
-	boshsys "github.com/cloudfoundry/bosh-agent/system"
+	bosherror "github.com/cloudfoundry/bosh-utils/errors"
+	boshcmd "github.com/cloudfoundry/bosh-utils/fileutil"
+	boshlog "github.com/cloudfoundry/bosh-utils/logger"
+	boshretry "github.com/cloudfoundry/bosh-utils/retrystrategy"
+	boshsys "github.com/cloudfoundry/bosh-utils/system"
 )
 
 const (
@@ -31,47 +31,75 @@ const (
 	SigarStatsCollectionInterval = 10 * time.Second
 )
 
+type Provider interface {
+	Get(name string) (Platform, error)
+}
+
 type provider struct {
 	platforms map[string]Platform
 }
 
-type ProviderOptions struct {
+type Options struct {
 	Linux LinuxOptions
 }
 
-func NewProvider(logger boshlog.Logger, dirProvider boshdirs.DirectoriesProvider, options ProviderOptions) (p provider) {
+func NewProvider(logger boshlog.Logger, dirProvider boshdirs.Provider, statsCollector boshstats.Collector, fs boshsys.FileSystem, options Options, bootstrapState *BootstrapState) Provider {
 	runner := boshsys.NewExecCmdRunner(logger)
-	fs := boshsys.NewOsFileSystem(logger)
 
 	linuxDiskManager := boshdisk.NewLinuxDiskManager(logger, runner, fs, options.Linux.BindMountPersistentDisk)
 
-	udev := boshudev.NewConcreteUdevDevice(runner)
+	udev := boshudev.NewConcreteUdevDevice(runner, logger)
 	linuxCdrom := boshcdrom.NewLinuxCdrom("/dev/sr0", udev, runner)
-	linuxCdutil := boshcd.NewCdUtil(dirProvider.SettingsDir(), fs, linuxCdrom)
+	linuxCdutil := boshcdrom.NewCdUtil(dirProvider.SettingsDir(), fs, linuxCdrom, logger)
 
 	compressor := boshcmd.NewTarballCompressor(runner, fs)
 	copier := boshcmd.NewCpCopier(runner, fs, logger)
 
-	sigarCollector := boshstats.NewSigarStatsCollector(&sigar.ConcreteSigar{})
-
 	// Kick of stats collection as soon as possible
-	go sigarCollector.StartCollecting(SigarStatsCollectionInterval, nil)
+	go statsCollector.StartCollecting(SigarStatsCollectionInterval, nil)
 
-	vitalsService := boshvitals.NewService(sigarCollector, dirProvider)
+	vitalsService := boshvitals.NewService(statsCollector, dirProvider)
+
+	ipResolver := boship.NewResolver(boship.NetworkInterfaceToAddrsFunc)
+
+	arping := bosharp.NewArping(runner, fs, logger, ArpIterations, ArpIterationDelay, ArpInterfaceCheckDelay)
+	interfaceConfigurationCreator := boshnet.NewInterfaceConfigurationCreator(logger)
+
+	interfaceAddressesProvider := boship.NewSystemInterfaceAddressesProvider()
+	interfaceAddressesValidator := boship.NewInterfaceAddressesValidator(interfaceAddressesProvider)
+	dnsValidator := boshnet.NewDNSValidator(fs)
+
+	centosNetManager := boshnet.NewCentosNetManager(fs, runner, ipResolver, interfaceConfigurationCreator, interfaceAddressesValidator, dnsValidator, arping, logger)
+	ubuntuNetManager := boshnet.NewUbuntuNetManager(fs, runner, ipResolver, interfaceConfigurationCreator, interfaceAddressesValidator, dnsValidator, arping, logger)
+
+	centosCertManager := boshcert.NewCentOSCertManager(fs, runner, 0, logger)
+	ubuntuCertManager := boshcert.NewUbuntuCertManager(fs, runner, 60, logger)
 
 	routesSearcher := boshnet.NewCmdRoutesSearcher(runner)
-	ipResolver := boship.NewIPResolver(boship.NetworkInterfaceToAddrsFunc)
+	linuxDefaultNetworkResolver := boshnet.NewDefaultNetworkResolver(routesSearcher, ipResolver)
 
-	defaultNetworkResolver := boshnet.NewDefaultNetworkResolver(routesSearcher, ipResolver)
-	arping := bosharp.NewArping(runner, fs, logger, ArpIterations, ArpIterationDelay, ArpInterfaceCheckDelay)
+	monitRetryable := NewMonitRetryable(runner)
+	monitRetryStrategy := boshretry.NewAttemptRetryStrategy(10, 1*time.Second, monitRetryable, logger)
 
-	centosNetManager := boshnet.NewCentosNetManager(fs, runner, defaultNetworkResolver, ipResolver, arping, logger)
-	ubuntuNetManager := boshnet.NewUbuntuNetManager(fs, runner, defaultNetworkResolver, ipResolver, arping, logger)
+	var devicePathResolver devicepathresolver.DevicePathResolver
+	switch options.Linux.DevicePathResolutionType {
+	case "virtio":
+		udev := boshudev.NewConcreteUdevDevice(runner, logger)
+		idDevicePathResolver := devicepathresolver.NewIDDevicePathResolver(500*time.Millisecond, udev, fs)
+		mappedDevicePathResolver := devicepathresolver.NewMappedDevicePathResolver(500*time.Millisecond, fs)
+		devicePathResolver = devicepathresolver.NewVirtioDevicePathResolver(idDevicePathResolver, mappedDevicePathResolver, logger)
+	case "scsi":
+		scsiIDPathResolver := devicepathresolver.NewSCSIIDDevicePathResolver(50000*time.Millisecond, fs, logger)
+		scsiVolumeIDPathResolver := devicepathresolver.NewSCSIVolumeIDDevicePathResolver(500*time.Millisecond, fs)
+		devicePathResolver = devicepathresolver.NewScsiDevicePathResolver(scsiVolumeIDPathResolver, scsiIDPathResolver)
+	default:
+		devicePathResolver = devicepathresolver.NewIdentityDevicePathResolver()
+	}
 
 	centos := NewLinuxPlatform(
 		fs,
 		runner,
-		sigarCollector,
+		statsCollector,
 		compressor,
 		copier,
 		dirProvider,
@@ -79,15 +107,20 @@ func NewProvider(logger boshlog.Logger, dirProvider boshdirs.DirectoriesProvider
 		linuxCdutil,
 		linuxDiskManager,
 		centosNetManager,
+		centosCertManager,
+		monitRetryStrategy,
+		devicePathResolver,
 		500*time.Millisecond,
+		bootstrapState,
 		options.Linux,
 		logger,
+		linuxDefaultNetworkResolver,
 	)
 
 	ubuntu := NewLinuxPlatform(
 		fs,
 		runner,
-		sigarCollector,
+		statsCollector,
 		compressor,
 		copier,
 		dirProvider,
@@ -95,23 +128,29 @@ func NewProvider(logger boshlog.Logger, dirProvider boshdirs.DirectoriesProvider
 		linuxCdutil,
 		linuxDiskManager,
 		ubuntuNetManager,
+		ubuntuCertManager,
+		monitRetryStrategy,
+		devicePathResolver,
 		500*time.Millisecond,
+		bootstrapState,
 		options.Linux,
 		logger,
+		linuxDefaultNetworkResolver,
 	)
 
-	p.platforms = map[string]Platform{
-		"ubuntu": ubuntu,
-		"centos": centos,
-		"dummy":  NewDummyPlatform(sigarCollector, fs, runner, dirProvider, logger),
+	return provider{
+		platforms: map[string]Platform{
+			"ubuntu": ubuntu,
+			"centos": centos,
+			"dummy":  NewDummyPlatform(statsCollector, fs, runner, dirProvider, devicePathResolver, logger),
+		},
 	}
-	return
 }
 
 func (p provider) Get(name string) (Platform, error) {
 	plat, found := p.platforms[name]
 	if !found {
-		return nil, bosherror.New("Platform %s could not be found", name)
+		return nil, bosherror.Errorf("Platform %s could not be found", name)
 	}
 	return plat, nil
 }

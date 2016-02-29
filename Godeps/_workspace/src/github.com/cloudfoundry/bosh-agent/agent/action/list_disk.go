@@ -3,10 +3,10 @@ package action
 import (
 	"errors"
 
-	bosherr "github.com/cloudfoundry/bosh-agent/errors"
-	boshlog "github.com/cloudfoundry/bosh-agent/logger"
 	boshplatform "github.com/cloudfoundry/bosh-agent/platform"
 	boshsettings "github.com/cloudfoundry/bosh-agent/settings"
+	bosherr "github.com/cloudfoundry/bosh-utils/errors"
+	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 )
 
 type ListDiskAction struct {
@@ -34,28 +34,27 @@ func (a ListDiskAction) IsPersistent() bool {
 	return false
 }
 
-func (a ListDiskAction) Run() (value interface{}, err error) {
+func (a ListDiskAction) Run() (interface{}, error) {
 	settings := a.settingsService.GetSettings()
-	volumeIDs := []string{}
+	diskIDs := []string{}
 
-	for volumeID, devicePath := range settings.Disks.Persistent {
+	for diskID := range settings.Disks.Persistent {
 		var isMounted bool
 
-		isMounted, err = a.platform.IsPersistentDiskMounted(devicePath)
+		diskSettings, _ := settings.PersistentDiskSettings(diskID)
+		isMounted, err := a.platform.IsPersistentDiskMounted(diskSettings)
 		if err != nil {
-			bosherr.WrapError(err, "Checking whether device %s is mounted", devicePath)
-			return
+			return nil, bosherr.WrapErrorf(err, "Checking whether device %+v is mounted", diskSettings)
 		}
 
 		if isMounted {
-			volumeIDs = append(volumeIDs, volumeID)
+			diskIDs = append(diskIDs, diskID)
 		} else {
-			a.logger.Debug("list-disk-action", "Not mounted", volumeID)
+			a.logger.Debug("list-disk-action", "Volume '%s' not mounted", diskID)
 		}
 	}
 
-	value = volumeIDs
-	return
+	return diskIDs, nil
 }
 
 func (a ListDiskAction) Resume() (interface{}, error) {

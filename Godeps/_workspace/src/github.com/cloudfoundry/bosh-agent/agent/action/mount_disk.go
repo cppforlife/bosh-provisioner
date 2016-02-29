@@ -3,36 +3,37 @@ package action
 import (
 	"errors"
 
-	bosherr "github.com/cloudfoundry/bosh-agent/errors"
+	boshdpresolv "github.com/cloudfoundry/bosh-agent/infrastructure/devicepathresolver"
 	boshsettings "github.com/cloudfoundry/bosh-agent/settings"
 	boshdirs "github.com/cloudfoundry/bosh-agent/settings/directories"
+	bosherr "github.com/cloudfoundry/bosh-utils/errors"
+	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 )
 
-type diskMounter interface {
-	MountPersistentDisk(volumeID, mountPoint string) error
-}
+const logTag string = "MountDiskAction"
 
-type mountPoints interface {
-	IsMountPoint(string) (bool, error)
+type diskMounter interface {
+	MountPersistentDisk(diskSettings boshsettings.DiskSettings, mountPoint string) error
 }
 
 type MountDiskAction struct {
-	settingsService boshsettings.Service
-	diskMounter     diskMounter
-	mountPoints     mountPoints
-	dirProvider     boshdirs.DirectoriesProvider
+	settingsService    boshsettings.Service
+	diskMounter        diskMounter
+	devicePathResolver boshdpresolv.DevicePathResolver
+	dirProvider        boshdirs.Provider
+	logger             boshlog.Logger
 }
 
 func NewMountDisk(
 	settingsService boshsettings.Service,
 	diskMounter diskMounter,
-	mountPoints mountPoints,
-	dirProvider boshdirs.DirectoriesProvider,
+	dirProvider boshdirs.Provider,
+	logger boshlog.Logger,
 ) (mountDisk MountDiskAction) {
 	mountDisk.settingsService = settingsService
 	mountDisk.diskMounter = diskMounter
-	mountDisk.mountPoints = mountPoints
 	mountDisk.dirProvider = dirProvider
+	mountDisk.logger = logger
 	return
 }
 
@@ -52,22 +53,14 @@ func (a MountDiskAction) Run(diskCid string) (interface{}, error) {
 
 	settings := a.settingsService.GetSettings()
 
-	devicePath, found := settings.Disks.Persistent[diskCid]
+	diskSettings, found := settings.PersistentDiskSettings(diskCid)
 	if !found {
-		return nil, bosherr.New("Persistent disk with volume id '%s' could not be found", diskCid)
+		return nil, bosherr.Errorf("Persistent disk with volume id '%s' could not be found", diskCid)
 	}
 
 	mountPoint := a.dirProvider.StoreDir()
 
-	isMountPoint, err := a.mountPoints.IsMountPoint(mountPoint)
-	if err != nil {
-		return nil, bosherr.WrapError(err, "Checking mount point")
-	}
-	if isMountPoint {
-		mountPoint = a.dirProvider.StoreMigrationDir()
-	}
-
-	err = a.diskMounter.MountPersistentDisk(devicePath, mountPoint)
+	err = a.diskMounter.MountPersistentDisk(diskSettings, mountPoint)
 	if err != nil {
 		return nil, bosherr.WrapError(err, "Mounting persistent disk")
 	}

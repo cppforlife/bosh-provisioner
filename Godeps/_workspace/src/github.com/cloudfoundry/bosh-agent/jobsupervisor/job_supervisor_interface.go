@@ -4,6 +4,27 @@ import (
 	boshalert "github.com/cloudfoundry/bosh-agent/agent/alert"
 )
 
+type Process struct {
+	Name   string       `json:"name"`
+	State  string       `json:"state"`
+	Uptime UptimeVitals `json:"uptime,omitempty"`
+	Memory MemoryVitals `json:"mem,omitempty"`
+	CPU    CPUVitals    `json:"cpu,omitempty"`
+}
+
+type UptimeVitals struct {
+	Secs int `json:"secs,omitempty"`
+}
+
+type MemoryVitals struct {
+	Kb      int     `json:"kb,omitempty"`
+	Percent float64 `json:"percent"`
+}
+
+type CPUVitals struct {
+	Total float64 `json:"total"`
+}
+
 type JobFailureHandler func(boshalert.MonitAlert) error
 
 type JobSupervisor interface {
@@ -20,7 +41,7 @@ type JobSupervisor interface {
 	Unmonitor() error
 
 	Status() string
-
+	Processes() ([]Process, error)
 	// Job management
 	AddJob(jobName string, jobIndex int, configPath string) error
 	RemoveAllJobs() error

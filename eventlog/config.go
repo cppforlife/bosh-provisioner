@@ -1,7 +1,7 @@
 package eventlog
 
 import (
-	bosherr "github.com/cloudfoundry/bosh-agent/errors"
+	bosherr "github.com/cloudfoundry/bosh-utils/errors"
 )
 
 const (
@@ -20,6 +20,6 @@ func (c Config) Validate() error {
 	case ConfigDeviceTypeText:
 		return nil
 	default:
-		return bosherr.New("Unknown device type '%s'", c.DeviceType)
+		return bosherr.Errorf("Unknown device type '%s'", c.DeviceType)
 	}
 }

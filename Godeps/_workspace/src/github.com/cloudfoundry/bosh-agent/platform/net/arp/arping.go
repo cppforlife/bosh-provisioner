@@ -1,13 +1,13 @@
 package arp
 
 import (
-	"path/filepath"
+	"path"
 	"sync"
 	"time"
 
-	boshlog "github.com/cloudfoundry/bosh-agent/logger"
 	boship "github.com/cloudfoundry/bosh-agent/platform/net/ip"
-	boshsys "github.com/cloudfoundry/bosh-agent/system"
+	boshlog "github.com/cloudfoundry/bosh-utils/logger"
+	boshsys "github.com/cloudfoundry/bosh-utils/system"
 )
 
 const arpingLogTag = "arping"
@@ -29,7 +29,7 @@ func NewArping(
 	iterations int,
 	iterationDelay time.Duration,
 	interfaceCheckDelay time.Duration,
-) arping {
+) AddressBroadcaster {
 	return arping{
 		cmdRunner:           cmdRunner,
 		fs:                  fs,
@@ -71,7 +71,7 @@ func (a arping) BroadcastMACAddresses(addresses []boship.InterfaceAddress) {
 // at /sys/class/net/<interfaceName>
 func (a arping) blockUntilInterfaceExists(interfaceName string) {
 	// TODO: Timeout waiting for net interface to exist?
-	for !a.fs.FileExists(filepath.Join("/sys/class/net", interfaceName)) {
+	for !a.fs.FileExists(path.Join("/sys/class/net", interfaceName)) {
 		time.Sleep(a.interfaceCheckDelay)
 	}
 }

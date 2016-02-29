@@ -4,8 +4,9 @@ import (
 	"strings"
 	"time"
 
-	bosherr "github.com/cloudfoundry/bosh-agent/errors"
-	boshsys "github.com/cloudfoundry/bosh-agent/system"
+	boshsettings "github.com/cloudfoundry/bosh-agent/settings"
+	bosherr "github.com/cloudfoundry/bosh-utils/errors"
+	boshsys "github.com/cloudfoundry/bosh-utils/system"
 )
 
 type mappedDevicePathResolver struct {
@@ -16,18 +17,23 @@ type mappedDevicePathResolver struct {
 func NewMappedDevicePathResolver(
 	diskWaitTimeout time.Duration,
 	fs boshsys.FileSystem,
-) mappedDevicePathResolver {
+) DevicePathResolver {
 	return mappedDevicePathResolver{fs: fs, diskWaitTimeout: diskWaitTimeout}
 }
 
-func (dpr mappedDevicePathResolver) GetRealDevicePath(devicePath string) (string, error) {
+func (dpr mappedDevicePathResolver) GetRealDevicePath(diskSettings boshsettings.DiskSettings) (string, bool, error) {
 	stopAfter := time.Now().Add(dpr.diskWaitTimeout)
+
+	devicePath := diskSettings.Path
+	if len(devicePath) == 0 {
+		return "", false, bosherr.Error("Getting real device path: path is missing")
+	}
 
 	realPath, found := dpr.findPossibleDevice(devicePath)
 
 	for !found {
 		if time.Now().After(stopAfter) {
-			return "", bosherr.New("Timed out getting real device path for %s", devicePath)
+			return "", true, bosherr.Errorf("Timed out getting real device path for %s", devicePath)
 		}
 
 		time.Sleep(100 * time.Millisecond)
@@ -35,22 +41,30 @@ func (dpr mappedDevicePathResolver) GetRealDevicePath(devicePath string) (string
 		realPath, found = dpr.findPossibleDevice(devicePath)
 	}
 
-	return realPath, nil
+	return realPath, false, nil
 }
 
 func (dpr mappedDevicePathResolver) findPossibleDevice(devicePath string) (string, bool) {
-	pathSuffix := strings.Split(devicePath, "/dev/sd")[1]
+	needsMapping := strings.HasPrefix(devicePath, "/dev/sd")
 
-	possiblePrefixes := []string{
-		"/dev/xvd", // Xen
-		"/dev/vd",  // KVM
-		"/dev/sd",
-	}
+	if needsMapping {
+		pathSuffix := strings.Split(devicePath, "/dev/sd")[1]
 
-	for _, prefix := range possiblePrefixes {
-		path := prefix + pathSuffix
-		if dpr.fs.FileExists(path) {
-			return path, true
+		possiblePrefixes := []string{
+			"/dev/xvd", // Xen
+			"/dev/vd",  // KVM
+			"/dev/sd",
+		}
+
+		for _, prefix := range possiblePrefixes {
+			path := prefix + pathSuffix
+			if dpr.fs.FileExists(path) {
+				return path, true
+			}
+		}
+	} else {
+		if dpr.fs.FileExists(devicePath) {
+			return devicePath, true
 		}
 	}
 

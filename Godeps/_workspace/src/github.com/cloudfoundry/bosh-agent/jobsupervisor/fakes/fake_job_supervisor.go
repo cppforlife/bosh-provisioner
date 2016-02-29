@@ -23,7 +23,9 @@ type FakeJobSupervisor struct {
 	Unmonitored  bool
 	UnmonitorErr error
 
-	StatusStatus string
+	StatusStatus    string
+	ProcessesStatus []boshjobsuper.Process
+	ProcessesError  error
 
 	JobFailureAlert *boshalert.MonitAlert
 }
@@ -77,9 +79,13 @@ func (m *FakeJobSupervisor) Status() string {
 	return m.StatusStatus
 }
 
+func (m *FakeJobSupervisor) Processes() ([]boshjobsuper.Process, error) {
+	return m.ProcessesStatus, m.ProcessesError
+}
+
 func (m *FakeJobSupervisor) MonitorJobFailures(handler boshjobsuper.JobFailureHandler) error {
 	if m.JobFailureAlert != nil {
-		handler(*m.JobFailureAlert)
+		return handler(*m.JobFailureAlert)
 	}
 	return nil
 }

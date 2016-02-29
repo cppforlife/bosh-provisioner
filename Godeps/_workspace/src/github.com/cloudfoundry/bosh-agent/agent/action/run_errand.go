@@ -2,13 +2,13 @@ package action
 
 import (
 	"errors"
-	"path/filepath"
+	"path"
 	"time"
 
 	boshas "github.com/cloudfoundry/bosh-agent/agent/applier/applyspec"
-	bosherr "github.com/cloudfoundry/bosh-agent/errors"
-	boshlog "github.com/cloudfoundry/bosh-agent/logger"
-	boshsys "github.com/cloudfoundry/bosh-agent/system"
+	bosherr "github.com/cloudfoundry/bosh-utils/errors"
+	boshlog "github.com/cloudfoundry/bosh-utils/logger"
+	boshsys "github.com/cloudfoundry/bosh-utils/system"
 )
 
 const runErrandActionLogTag = "runErrandAction"
@@ -61,11 +61,11 @@ func (a RunErrandAction) Run() (ErrandResult, error) {
 	}
 
 	if len(currentSpec.JobSpec.Template) == 0 {
-		return ErrandResult{}, bosherr.New("At least one job template is required to run an errand")
+		return ErrandResult{}, bosherr.Error("At least one job template is required to run an errand")
 	}
 
 	command := boshsys.Command{
-		Name: filepath.Join(a.jobsDir, currentSpec.JobSpec.Template, "bin", "run"),
+		Name: path.Join(a.jobsDir, currentSpec.JobSpec.Template, "bin", "run"),
 		Env: map[string]string{
 			"PATH": "/usr/sbin:/usr/bin:/sbin:/bin",
 		},

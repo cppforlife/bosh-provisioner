@@ -2,7 +2,7 @@ package applier
 
 import (
 	boshas "github.com/cloudfoundry/bosh-agent/agent/applier/applyspec"
-	bosherr "github.com/cloudfoundry/bosh-agent/errors"
+	bosherr "github.com/cloudfoundry/bosh-utils/errors"
 
 	bpdep "github.com/cppforlife/bosh-provisioner/deployment"
 	bptplcomp "github.com/cppforlife/bosh-provisioner/instance/templatescompiler"
@@ -86,13 +86,13 @@ func (s JobState) buildPackageSpecs() (map[string]boshas.PackageSpec, error) {
 	for _, template := range s.depJob.Templates {
 		pkgs, err := s.templatesCompiler.FindPackages(template)
 		if err != nil {
-			return specs, bosherr.WrapError(err, "Finding packages for template %s", template.Name)
+			return specs, bosherr.WrapErrorf(err, "Finding packages for template %s", template.Name)
 		}
 
 		for _, pkg := range pkgs {
 			rec, err := s.packagesCompiler.FindCompiledPackage(pkg)
 			if err != nil {
-				return specs, bosherr.WrapError(err, "Finding compiled package %s", pkg.Name)
+				return specs, bosherr.WrapErrorf(err, "Finding compiled package %s", pkg.Name)
 			}
 
 			specs[pkg.Name] = boshas.PackageSpec{
@@ -113,7 +113,7 @@ func (s JobState) buildRenderedTemplatesArchive() (boshas.RenderedTemplatesArchi
 
 	rec, err := s.templatesCompiler.FindRenderedArchive(s.depJob, s.instance)
 	if err != nil {
-		return archive, bosherr.WrapError(
+		return archive, bosherr.WrapErrorf(
 			err, "Finding rendered archive %s", s.depJob.Name)
 	}
 

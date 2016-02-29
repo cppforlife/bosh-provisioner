@@ -4,9 +4,9 @@ import (
 	"errors"
 	"fmt"
 
-	bosherr "github.com/cloudfoundry/bosh-agent/errors"
 	boshplatform "github.com/cloudfoundry/bosh-agent/platform"
 	boshsettings "github.com/cloudfoundry/bosh-agent/settings"
+	bosherr "github.com/cloudfoundry/bosh-utils/errors"
 )
 
 type UnmountDiskAction struct {
@@ -31,25 +31,25 @@ func (a UnmountDiskAction) IsPersistent() bool {
 	return false
 }
 
-func (a UnmountDiskAction) Run(volumeID string) (value interface{}, err error) {
+func (a UnmountDiskAction) Run(diskID string) (value interface{}, err error) {
 	settings := a.settingsService.GetSettings()
 
-	devicePath, found := settings.Disks.Persistent[volumeID]
+	diskSettings, found := settings.PersistentDiskSettings(diskID)
 	if !found {
-		err = bosherr.New("Persistent disk with volume id '%s' could not be found", volumeID)
+		err = bosherr.Errorf("Persistent disk with volume id '%s' could not be found", diskID)
 		return
 	}
 
-	didUnmount, err := a.platform.UnmountPersistentDisk(devicePath)
+	didUnmount, err := a.platform.UnmountPersistentDisk(diskSettings)
 	if err != nil {
 		err = bosherr.WrapError(err, "Unmounting persistent disk")
 		return
 	}
 
-	msg := fmt.Sprintf("Partition of %s is not mounted", devicePath)
+	msg := fmt.Sprintf("Partition of %+v is not mounted", diskSettings)
 
 	if didUnmount {
-		msg = fmt.Sprintf("Unmounted partition of %s", devicePath)
+		msg = fmt.Sprintf("Unmounted partition of %+v", diskSettings)
 	}
 
 	type valueType struct {

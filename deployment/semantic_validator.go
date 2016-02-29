@@ -1,7 +1,7 @@
 package deployment
 
 import (
-	bosherr "github.com/cloudfoundry/bosh-agent/errors"
+	bosherr "github.com/cloudfoundry/bosh-utils/errors"
 )
 
 // SemanticValidator validates deployment to determine if it represents a meaningful state.
@@ -19,14 +19,14 @@ func (v SemanticValidator) Validate() error {
 	for _, net := range v.deployment.Networks {
 		err := v.validateNetwork(net)
 		if err != nil {
-			return bosherr.WrapError(err, "Network %s", net.Name)
+			return bosherr.WrapErrorf(err, "Network %s", net.Name)
 		}
 	}
 
 	for _, release := range v.deployment.Releases {
 		err := v.validateRelease(release)
 		if err != nil {
-			return bosherr.WrapError(err, "Release %s", release.Name)
+			return bosherr.WrapErrorf(err, "Release %s", release.Name)
 		}
 	}
 
@@ -38,7 +38,7 @@ func (v SemanticValidator) Validate() error {
 	for _, job := range v.deployment.Jobs {
 		err := v.validateJob(job)
 		if err != nil {
-			return bosherr.WrapError(err, "Job %s", job.Name)
+			return bosherr.WrapErrorf(err, "Job %s", job.Name)
 		}
 	}
 
@@ -47,7 +47,7 @@ func (v SemanticValidator) Validate() error {
 
 func (v SemanticValidator) validateNetwork(network Network) error {
 	if network.Type == NetworkTypeManual {
-		return bosherr.New("Manual networking is not supported")
+		return bosherr.Error("Manual networking is not supported")
 	}
 
 	return nil
@@ -55,7 +55,7 @@ func (v SemanticValidator) validateNetwork(network Network) error {
 
 func (v SemanticValidator) validateRelease(release Release) error {
 	if release.Version == "latest" {
-		return bosherr.New("Version 'latest' is not supported")
+		return bosherr.Error("Version 'latest' is not supported")
 	}
 
 	return nil
@@ -65,14 +65,14 @@ func (v SemanticValidator) validateJob(job Job) error {
 	for _, template := range job.Templates {
 		err := v.validateTemplate(template)
 		if err != nil {
-			return bosherr.WrapError(err, "Template %s", template.Name)
+			return bosherr.WrapErrorf(err, "Template %s", template.Name)
 		}
 	}
 
 	for _, instance := range job.Instances {
 		err := v.validateInstance(instance)
 		if err != nil {
-			return bosherr.WrapError(err, "Instance %d", instance.Index)
+			return bosherr.WrapErrorf(err, "Instance %d", instance.Index)
 		}
 	}
 
@@ -81,7 +81,7 @@ func (v SemanticValidator) validateJob(job Job) error {
 
 func (v SemanticValidator) validateTemplate(template Template) error {
 	if template.Release == nil {
-		return bosherr.New("Missing associated release")
+		return bosherr.Error("Missing associated release")
 	}
 
 	return nil
@@ -91,7 +91,7 @@ func (v SemanticValidator) validateInstance(instance Instance) error {
 	for i, na := range instance.NetworkAssociations {
 		err := v.validateNetworkAssociation(na)
 		if err != nil {
-			return bosherr.WrapError(err, "Network association %d", i)
+			return bosherr.WrapErrorf(err, "Network association %d", i)
 		}
 	}
 
@@ -100,11 +100,11 @@ func (v SemanticValidator) validateInstance(instance Instance) error {
 
 func (v SemanticValidator) validateNetworkAssociation(na NetworkAssociation) error {
 	if na.Network == nil {
-		return bosherr.New("Missing associated network")
+		return bosherr.Error("Missing associated network")
 	}
 
 	if na.MustHaveStaticIP && na.StaticIP == nil {
-		return bosherr.New("Missing static IP assignment")
+		return bosherr.Error("Missing static IP assignment")
 	}
 
 	return nil

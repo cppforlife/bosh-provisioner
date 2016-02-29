@@ -4,7 +4,7 @@ type linuxBindMounter struct {
 	delegateMounter Mounter
 }
 
-func NewLinuxBindMounter(delegateMounter Mounter) linuxBindMounter {
+func NewLinuxBindMounter(delegateMounter Mounter) Mounter {
 	return linuxBindMounter{delegateMounter}
 }
 
@@ -32,7 +32,7 @@ func (m linuxBindMounter) Unmount(partitionOrMountPoint string) (bool, error) {
 	return m.delegateMounter.Unmount(partitionOrMountPoint)
 }
 
-func (m linuxBindMounter) IsMountPoint(path string) (bool, error) {
+func (m linuxBindMounter) IsMountPoint(path string) (string, bool, error) {
 	return m.delegateMounter.IsMountPoint(path)
 }
 

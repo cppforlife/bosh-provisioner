@@ -2,87 +2,243 @@ package net
 
 import (
 	"bytes"
-	"path/filepath"
+	"path"
 	"strings"
 	"text/template"
 
-	bosherr "github.com/cloudfoundry/bosh-agent/errors"
-	boshlog "github.com/cloudfoundry/bosh-agent/logger"
 	bosharp "github.com/cloudfoundry/bosh-agent/platform/net/arp"
 	boship "github.com/cloudfoundry/bosh-agent/platform/net/ip"
 	boshsettings "github.com/cloudfoundry/bosh-agent/settings"
-	boshsys "github.com/cloudfoundry/bosh-agent/system"
+	bosherr "github.com/cloudfoundry/bosh-utils/errors"
+	boshlog "github.com/cloudfoundry/bosh-utils/logger"
+	boshsys "github.com/cloudfoundry/bosh-utils/system"
 )
 
 const centosNetManagerLogTag = "centosNetManager"
 
 type centosNetManager struct {
-	DefaultNetworkResolver
-
-	fs                 boshsys.FileSystem
-	cmdRunner          boshsys.CmdRunner
-	routesSearcher     RoutesSearcher
-	ipResolver         boship.IPResolver
-	addressBroadcaster bosharp.AddressBroadcaster
-	logger             boshlog.Logger
+	fs                            boshsys.FileSystem
+	cmdRunner                     boshsys.CmdRunner
+	routesSearcher                RoutesSearcher
+	ipResolver                    boship.Resolver
+	interfaceConfigurationCreator InterfaceConfigurationCreator
+	interfaceAddressesValidator   boship.InterfaceAddressesValidator
+	dnsValidator                  DNSValidator
+	addressBroadcaster            bosharp.AddressBroadcaster
+	logger                        boshlog.Logger
 }
 
 func NewCentosNetManager(
 	fs boshsys.FileSystem,
 	cmdRunner boshsys.CmdRunner,
-	defaultNetworkResolver DefaultNetworkResolver,
-	ipResolver boship.IPResolver,
+	ipResolver boship.Resolver,
+	interfaceConfigurationCreator InterfaceConfigurationCreator,
+	interfaceAddressesValidator boship.InterfaceAddressesValidator,
+	dnsValidator DNSValidator,
 	addressBroadcaster bosharp.AddressBroadcaster,
 	logger boshlog.Logger,
-) centosNetManager {
+) Manager {
 	return centosNetManager{
-		DefaultNetworkResolver: defaultNetworkResolver,
-		fs:                 fs,
-		cmdRunner:          cmdRunner,
-		ipResolver:         ipResolver,
-		addressBroadcaster: addressBroadcaster,
-		logger:             logger,
+		fs:                            fs,
+		cmdRunner:                     cmdRunner,
+		ipResolver:                    ipResolver,
+		interfaceConfigurationCreator: interfaceConfigurationCreator,
+		interfaceAddressesValidator:   interfaceAddressesValidator,
+		dnsValidator:                  dnsValidator,
+		addressBroadcaster:            addressBroadcaster,
+		logger:                        logger,
 	}
 }
 
-func (net centosNetManager) SetupDhcp(networks boshsettings.Networks, errCh chan error) error {
-	net.logger.Debug(centosNetManagerLogTag, "Configuring DHCP networking")
+func (net centosNetManager) SetupNetworking(networks boshsettings.Networks, errCh chan error) error {
+	nonVipNetworks := boshsettings.Networks{}
+	for networkName, networkSettings := range networks {
+		if networkSettings.IsVIP() {
+			continue
+		}
+		nonVipNetworks[networkName] = networkSettings
+	}
 
+	staticInterfaceConfigurations, dhcpInterfaceConfigurations, err := net.buildInterfaces(nonVipNetworks)
+	if err != nil {
+		return err
+	}
+
+	dnsNetwork, _ := nonVipNetworks.DefaultNetworkFor("dns")
+	dnsServers := dnsNetwork.DNS
+
+	interfacesChanged, err := net.writeNetworkInterfaces(dhcpInterfaceConfigurations, staticInterfaceConfigurations, dnsServers)
+	if err != nil {
+		return bosherr.WrapError(err, "Writing network configuration")
+	}
+
+	dhcpChanged := false
+	if len(dhcpInterfaceConfigurations) > 0 {
+		dhcpChanged, err = net.writeDHCPConfiguration(dnsServers, dhcpInterfaceConfigurations)
+		if err != nil {
+			return err
+		}
+	}
+
+	if interfacesChanged || dhcpChanged {
+		net.restartNetworkingInterfaces()
+	}
+
+	staticAddresses, dynamicAddresses := net.ifaceAddresses(staticInterfaceConfigurations, dhcpInterfaceConfigurations)
+
+	err = net.interfaceAddressesValidator.Validate(staticAddresses)
+	if err != nil {
+		return bosherr.WrapError(err, "Validating static network configuration")
+	}
+
+	err = net.dnsValidator.Validate(dnsServers)
+	if err != nil {
+		return bosherr.WrapError(err, "Validating dns configuration")
+	}
+
+	net.broadcastIps(append(staticAddresses, dynamicAddresses...), errCh)
+
+	return nil
+}
+
+func (net centosNetManager) GetConfiguredNetworkInterfaces() ([]string, error) {
+	interfaces := []string{}
+
+	interfacesByMacAddress, err := net.detectMacAddresses()
+	if err != nil {
+		return interfaces, bosherr.WrapError(err, "Getting network interfaces")
+	}
+
+	for _, iface := range interfacesByMacAddress {
+		if net.fs.FileExists(ifcfgFilePath(iface)) {
+			interfaces = append(interfaces, iface)
+		}
+	}
+
+	return interfaces, nil
+}
+
+const centosDHCPIfcfgTemplate = `DEVICE={{ .Name }}
+BOOTPROTO=dhcp
+ONBOOT=yes
+PEERDNS=yes
+`
+
+const centosStaticIfcfgTemplate = `DEVICE={{ .Name }}
+BOOTPROTO=static
+IPADDR={{ .Address }}
+NETMASK={{ .Netmask }}
+BROADCAST={{ .Broadcast }}
+GATEWAY={{ .Gateway }}
+ONBOOT=yes
+PEERDNS=no{{ range .DNSServers }}
+DNS{{ .Index }}={{ .Address }}{{ end }}
+`
+
+type centosStaticIfcfg struct {
+	*StaticInterfaceConfiguration
+	DNSServers []dnsConfig
+}
+
+type dnsConfig struct {
+	Index   int
+	Address string
+}
+
+func newDNSConfigs(dnsServers []string) []dnsConfig {
+	dnsConfigs := []dnsConfig{}
+	for i := range dnsServers {
+		dnsConfigs = append(dnsConfigs, dnsConfig{Index: i + 1, Address: dnsServers[i]})
+	}
+	return dnsConfigs
+}
+
+func ifcfgFilePath(name string) string {
+	return path.Join("/etc/sysconfig/network-scripts", "ifcfg-"+name)
+}
+
+func (net centosNetManager) writeIfcfgFile(name string, t *template.Template, config interface{}) (bool, error) {
 	buffer := bytes.NewBuffer([]byte{})
-	t := template.Must(template.New("dhcp-config").Parse(centosDHCPConfigTemplate))
 
-	// Keep DNS servers in the order specified by the network
-	// because they are added by a *single* DHCP's prepend command
-	dnsNetwork, _ := networks.DefaultNetworkFor("dns")
-	dnsServersList := strings.Join(dnsNetwork.DNS, ", ")
-	err := t.Execute(buffer, dnsServersList)
+	err := t.Execute(buffer, config)
 	if err != nil {
-		return bosherr.WrapError(err, "Generating config from template")
+		return false, bosherr.WrapErrorf(err, "Generating '%s' config from template", name)
 	}
 
-	written, err := net.fs.ConvergeFileContents("/etc/dhcp/dhclient.conf", buffer.Bytes())
+	filePath := ifcfgFilePath(name)
+	changed, err := net.fs.ConvergeFileContents(filePath, buffer.Bytes())
 	if err != nil {
-		return bosherr.WrapError(err, "Writing to /etc/dhcp/dhclient.conf")
+		return false, bosherr.WrapErrorf(err, "Writing config to '%s'", filePath)
 	}
 
-	if written {
-		net.restartNetwork()
+	return changed, nil
+}
+
+func (net centosNetManager) writeNetworkInterfaces(dhcpInterfaceConfigurations []DHCPInterfaceConfiguration, staticInterfaceConfigurations []StaticInterfaceConfiguration, dnsServers []string) (bool, error) {
+	anyInterfaceChanged := false
+
+	staticConfig := centosStaticIfcfg{}
+	staticConfig.DNSServers = newDNSConfigs(dnsServers)
+	staticTemplate := template.Must(template.New("ifcfg").Parse(centosStaticIfcfgTemplate))
+
+	for i := range staticInterfaceConfigurations {
+		staticConfig.StaticInterfaceConfiguration = &staticInterfaceConfigurations[i]
+
+		changed, err := net.writeIfcfgFile(staticConfig.StaticInterfaceConfiguration.Name, staticTemplate, staticConfig)
+		if err != nil {
+			return false, bosherr.WrapError(err, "Writing static config")
+		}
+
+		anyInterfaceChanged = anyInterfaceChanged || changed
 	}
 
-	addresses := []boship.InterfaceAddress{
-		// eth0 is hard coded in AWS and OpenStack stemcells.
-		// TODO: abstract hardcoded network interface name to the NetManager
-		boship.NewResolvingInterfaceAddress("eth0", net.ipResolver),
+	dhcpTemplate := template.Must(template.New("ifcfg").Parse(centosDHCPIfcfgTemplate))
+
+	for i := range dhcpInterfaceConfigurations {
+		config := &dhcpInterfaceConfigurations[i]
+
+		changed, err := net.writeIfcfgFile(config.Name, dhcpTemplate, config)
+		if err != nil {
+			return false, bosherr.WrapError(err, "Writing dhcp config")
+		}
+
+		anyInterfaceChanged = anyInterfaceChanged || changed
 	}
 
+	return anyInterfaceChanged, nil
+}
+
+func (net centosNetManager) buildInterfaces(networks boshsettings.Networks) ([]StaticInterfaceConfiguration, []DHCPInterfaceConfiguration, error) {
+	interfacesByMacAddress, err := net.detectMacAddresses()
+	if err != nil {
+		return nil, nil, bosherr.WrapError(err, "Getting network interfaces")
+	}
+
+	staticInterfaceConfigurations, dhcpInterfaceConfigurations, err := net.interfaceConfigurationCreator.CreateInterfaceConfigurations(networks, interfacesByMacAddress)
+
+	if err != nil {
+		return nil, nil, bosherr.WrapError(err, "Creating interface configurations")
+	}
+
+	return staticInterfaceConfigurations, dhcpInterfaceConfigurations, nil
+}
+
+func (net centosNetManager) broadcastIps(addresses []boship.InterfaceAddress, errCh chan error) {
 	go func() {
 		net.addressBroadcaster.BroadcastMACAddresses(addresses)
 		if errCh != nil {
 			errCh <- nil
 		}
 	}()
+}
 
-	return err
+func (net centosNetManager) restartNetworkingInterfaces() {
+	net.logger.Debug(centosNetManagerLogTag, "Restarting network interfaces")
+
+	_, _, _, err := net.cmdRunner.RunCommand("service", "network", "restart")
+	if err != nil {
+		net.logger.Error(centosNetManagerLogTag, "Ignoring network restart failure: %s", err.Error())
+	}
 }
 
 // DHCP Config file - /etc/dhcp3/dhclient.conf
@@ -100,106 +256,35 @@ request subnet-mask, broadcast-address, time-offset, routers,
 prepend domain-name-servers {{ . }};{{ end }}
 `
 
-func (net centosNetManager) SetupManualNetworking(networks boshsettings.Networks, errCh chan error) error {
-	net.logger.Debug(centosNetManagerLogTag, "Configuring manual networking")
-
-	modifiedNetworks, err := net.writeIfcfgs(networks)
-	if err != nil {
-		return bosherr.WrapError(err, "Writing network interfaces")
-	}
-
-	net.restartNetwork()
-
-	err = net.writeResolvConf(networks)
-	if err != nil {
-		return bosherr.WrapError(err, "Writing resolv.conf")
-	}
-
-	addresses := toInterfaceAddresses(modifiedNetworks)
-
-	go func() {
-		net.addressBroadcaster.BroadcastMACAddresses(addresses)
-		if errCh != nil {
-			errCh <- nil
-		}
-	}()
-
-	return nil
-}
-
-func (net centosNetManager) writeIfcfgs(networks boshsettings.Networks) ([]customNetwork, error) {
-	var modifiedNetworks []customNetwork
-
-	macAddresses, err := net.detectMacAddresses()
-	if err != nil {
-		return modifiedNetworks, bosherr.WrapError(err, "Detecting mac addresses")
-	}
-
-	for _, aNet := range networks {
-		var network, broadcast string
-		network, broadcast, err = boshsys.CalculateNetworkAndBroadcast(aNet.IP, aNet.Netmask)
-		if err != nil {
-			return modifiedNetworks, bosherr.WrapError(err, "Calculating network and broadcast")
-		}
-
-		newNet := customNetwork{
-			aNet,
-			macAddresses[aNet.Mac],
-			network,
-			broadcast,
-			true,
-		}
-		modifiedNetworks = append(modifiedNetworks, newNet)
-
-		buffer := bytes.NewBuffer([]byte{})
-		t := template.Must(template.New("ifcfg").Parse(centosIfcgfTemplate))
-
-		err = t.Execute(buffer, newNet)
-		if err != nil {
-			return modifiedNetworks, bosherr.WrapError(err, "Generating config from template")
-		}
-
-		err = net.fs.WriteFile(filepath.Join("/etc/sysconfig/network-scripts", "ifcfg-"+newNet.Interface), buffer.Bytes())
-		if err != nil {
-			return modifiedNetworks, bosherr.WrapError(err, "Writing to /etc/sysconfig/network-scripts")
-		}
-	}
-
-	return modifiedNetworks, nil
-}
-
-const centosIfcgfTemplate = `DEVICE={{ .Interface }}
-BOOTPROTO=static
-IPADDR={{ .IP }}
-NETMASK={{ .Netmask }}
-BROADCAST={{ .Broadcast }}
-{{ if .HasDefaultGateway }}GATEWAY={{ .Gateway }}{{ end }}
-ONBOOT=yes`
-
-func (net centosNetManager) writeResolvConf(networks boshsettings.Networks) error {
+func (net centosNetManager) writeDHCPConfiguration(dnsServers []string, dhcpInterfaceConfigurations []DHCPInterfaceConfiguration) (bool, error) {
 	buffer := bytes.NewBuffer([]byte{})
-	t := template.Must(template.New("resolv-conf").Parse(centosResolvConfTemplate))
+	t := template.Must(template.New("dhcp-config").Parse(centosDHCPConfigTemplate))
 
 	// Keep DNS servers in the order specified by the network
-	dnsNetwork, _ := networks.DefaultNetworkFor("dns")
-	dnsServersArg := dnsConfigArg{dnsNetwork.DNS}
-
-	err := t.Execute(buffer, dnsServersArg)
+	// because they are added by a *single* DHCP's prepend command
+	dnsServersList := strings.Join(dnsServers, ", ")
+	err := t.Execute(buffer, dnsServersList)
 	if err != nil {
-		return bosherr.WrapError(err, "Generating config from template")
+		return false, bosherr.WrapError(err, "Generating config from template")
+	}
+	dhclientConfigFile := "/etc/dhcp/dhclient.conf"
+	changed, err := net.fs.ConvergeFileContents(dhclientConfigFile, buffer.Bytes())
+
+	if err != nil {
+		return changed, bosherr.WrapErrorf(err, "Writing to %s", dhclientConfigFile)
 	}
 
-	err = net.fs.WriteFile("/etc/resolv.conf", buffer.Bytes())
-	if err != nil {
-		return bosherr.WrapError(err, "Writing to /etc/resolv.conf")
+	for i := range dhcpInterfaceConfigurations {
+		name := dhcpInterfaceConfigurations[i].Name
+		interfaceDhclientConfigFile := path.Join("/etc/dhcp/", "dhclient-"+name+".conf")
+		err = net.fs.Symlink(dhclientConfigFile, interfaceDhclientConfigFile)
+		if err != nil {
+			return changed, bosherr.WrapErrorf(err, "Symlinking '%s' to '%s'", interfaceDhclientConfigFile, dhclientConfigFile)
+		}
 	}
 
-	return nil
+	return changed, nil
 }
-
-const centosResolvConfTemplate = `# Generated by bosh-agent
-{{ range .DNSServers }}nameserver {{ . }}
-{{ end }}`
 
 func (net centosNetManager) detectMacAddresses() (map[string]string, error) {
 	addresses := map[string]string{}
@@ -211,25 +296,33 @@ func (net centosNetManager) detectMacAddresses() (map[string]string, error) {
 
 	var macAddress string
 	for _, filePath := range filePaths {
-		macAddress, err = net.fs.ReadFileString(filepath.Join(filePath, "address"))
-		if err != nil {
-			return addresses, bosherr.WrapError(err, "Reading mac address from file")
+		isPhysicalDevice := net.fs.FileExists(path.Join(filePath, "device"))
+
+		if isPhysicalDevice {
+			macAddress, err = net.fs.ReadFileString(path.Join(filePath, "address"))
+			if err != nil {
+				return addresses, bosherr.WrapError(err, "Reading mac address from file")
+			}
+
+			macAddress = strings.Trim(macAddress, "\n")
+
+			interfaceName := path.Base(filePath)
+			addresses[macAddress] = interfaceName
 		}
-
-		macAddress = strings.Trim(macAddress, "\n")
-
-		interfaceName := filepath.Base(filePath)
-		addresses[macAddress] = interfaceName
 	}
 
 	return addresses, nil
 }
 
-func (net centosNetManager) restartNetwork() {
-	net.logger.Debug(centosNetManagerLogTag, "Restarting networking")
-
-	_, _, _, err := net.cmdRunner.RunCommand("service", "network", "restart")
-	if err != nil {
-		net.logger.Error(centosNetManagerLogTag, "Ignoring network restart failure: %#v", err)
+func (net centosNetManager) ifaceAddresses(staticConfigs []StaticInterfaceConfiguration, dhcpConfigs []DHCPInterfaceConfiguration) ([]boship.InterfaceAddress, []boship.InterfaceAddress) {
+	staticAddresses := []boship.InterfaceAddress{}
+	for _, iface := range staticConfigs {
+		staticAddresses = append(staticAddresses, boship.NewSimpleInterfaceAddress(iface.Name, iface.Address))
 	}
+	dynamicAddresses := []boship.InterfaceAddress{}
+	for _, iface := range dhcpConfigs {
+		dynamicAddresses = append(dynamicAddresses, boship.NewResolvingInterfaceAddress(iface.Name, net.ipResolver))
+	}
+
+	return staticAddresses, dynamicAddresses
 }

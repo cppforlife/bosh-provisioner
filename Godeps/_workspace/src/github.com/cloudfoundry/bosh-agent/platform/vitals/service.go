@@ -2,9 +2,10 @@ package vitals
 
 import (
 	"fmt"
-	bosherr "github.com/cloudfoundry/bosh-agent/errors"
+
 	boshstats "github.com/cloudfoundry/bosh-agent/platform/stats"
 	boshdirs "github.com/cloudfoundry/bosh-agent/settings/directories"
+	bosherr "github.com/cloudfoundry/bosh-utils/errors"
 )
 
 type Service interface {
@@ -12,11 +13,11 @@ type Service interface {
 }
 
 type concreteService struct {
-	statsCollector boshstats.StatsCollector
-	dirProvider    boshdirs.DirectoriesProvider
+	statsCollector boshstats.Collector
+	dirProvider    boshdirs.Provider
 }
 
-func NewService(statsCollector boshstats.StatsCollector, dirProvider boshdirs.DirectoriesProvider) Service {
+func NewService(statsCollector boshstats.Collector, dirProvider boshdirs.Provider) Service {
 	return concreteService{
 		statsCollector: statsCollector,
 		dirProvider:    dirProvider,
