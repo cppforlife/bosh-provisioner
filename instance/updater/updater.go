@@ -15,11 +15,12 @@ const updaterLogTag = "Updater"
 type Updater struct {
 	instanceDesc string
 
-	drainer Drainer
-	stopper Stopper
-	applier bpapplier.Applier
-	starter Starter
-	waiter  Waiter
+	drainer      Drainer
+	stopper      Stopper
+	applier      bpapplier.Applier
+	starter      Starter
+	waiter       Waiter
+	post_starter PostStarter
 
 	eventLog bpeventlog.Log
 	logger   boshlog.Logger
@@ -32,17 +33,19 @@ func NewUpdater(
 	applier bpapplier.Applier,
 	starter Starter,
 	waiter Waiter,
+	post_starter PostStarter,
 	eventLog bpeventlog.Log,
 	logger boshlog.Logger,
 ) Updater {
 	return Updater{
 		instanceDesc: instanceDesc,
 
-		drainer: drainer,
-		stopper: stopper,
-		applier: applier,
-		starter: starter,
-		waiter:  waiter,
+		drainer:      drainer,
+		stopper:      stopper,
+		applier:      applier,
+		starter:      starter,
+		waiter:       waiter,
+		post_starter: post_starter,
 
 		eventLog: eventLog,
 		logger:   logger,
@@ -71,6 +74,13 @@ func (u Updater) SetUp() error {
 	err = task.End(u.waiter.Wait())
 	if err != nil {
 		return bosherr.WrapError(err, "Waiting")
+	}
+
+	task = stage.BeginTask("Post Start")
+
+	err = task.End(u.post_starter.PostStart())
+	if err != nil {
+		return bosherr.WrapError(err, "Post Starting")
 	}
 
 	return nil

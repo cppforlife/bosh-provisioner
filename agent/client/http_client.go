@@ -106,8 +106,16 @@ func (ac HTTPClient) Apply(desiredSpec boshas.V1ApplySpec) (string, error) {
 	return ac.makeStringRequest(ac.longRequest, "apply", reqArgs{desiredSpec})
 }
 
+func (ac HTTPClient) PreStart() (interface{}, error) {
+	return ac.quickRequest("run_script", reqArgs{"pre-start", make(map[string]interface{})})
+}
+
 func (ac HTTPClient) Start() (string, error) {
 	return ac.makeStringRequest(ac.quickRequest, "start", reqArgs{})
+}
+
+func (ac HTTPClient) PostStart() (interface{}, error) {
+	return ac.quickRequest("run_script", reqArgs{"post-start", make(map[string]interface{})})
 }
 
 func (ac HTTPClient) Stop() (string, error) {

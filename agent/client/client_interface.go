@@ -36,7 +36,9 @@ type StateManager interface {
 }
 
 type JobManager interface {
+	PreStart() (interface{}, error)
 	Start() (string, error)
+	PostStart() (interface{}, error)
 	Stop() (string, error)
 	Drain(boshaction.DrainType, ...boshas.V1ApplySpec) (int, error)
 	RunErrand() (boshaction.ErrandResult, error)

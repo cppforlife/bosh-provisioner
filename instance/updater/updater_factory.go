@@ -65,6 +65,11 @@ func (f Factory) NewUpdater(
 		f.logger,
 	)
 
+	post_starter := NewPostStarter(
+		agentClient,
+		f.logger,
+	)
+
 	updater := NewUpdater(
 		fmt.Sprintf("%s/%d", instance.JobName, instance.Index),
 		drainer,
@@ -72,6 +77,7 @@ func (f Factory) NewUpdater(
 		applier,
 		starter,
 		waiter,
+		post_starter,
 		f.eventLog,
 		f.logger,
 	)
