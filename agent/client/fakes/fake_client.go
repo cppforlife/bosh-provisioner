@@ -10,13 +10,11 @@ import (
 )
 
 type FakeClient struct {
-	GetStateState     boshaction.GetStateV1ApplySpec
-	GetStateStates    []boshaction.GetStateV1ApplySpec
-	GetStateErr       error
-	PreStartResponse  interface{}
-	PreStartErr       error
-	PostStartResponse interface{}
-	PostStartErr      error
+	GetStateState  boshaction.GetStateV1ApplySpec
+	GetStateStates []boshaction.GetStateV1ApplySpec
+	GetStateErr    error
+	PreStartErr    error
+	PostStartErr   error
 }
 
 func (c *FakeClient) Ping() (string, error) {
@@ -58,16 +56,16 @@ func (c *FakeClient) GetState(filters ...string) (boshaction.GetStateV1ApplySpec
 	return state, c.GetStateErr
 }
 
-func (c *FakeClient) PreStart() (interface{}, error) {
-	return c.PreStartResponse, c.PreStartErr
+func (c *FakeClient) PreStart() error {
+	return c.PreStartErr
 }
 
 func (c *FakeClient) Start() (string, error) {
 	return "", bosherr.Error("fake-start-err")
 }
 
-func (c *FakeClient) PostStart() (interface{}, error) {
-	return c.PostStartResponse, c.PostStartErr
+func (c *FakeClient) PostStart() error {
+	return c.PostStartErr
 }
 
 func (c *FakeClient) Stop() (string, error) {

@@ -65,7 +65,7 @@ func (f Factory) NewUpdater(
 		f.logger,
 	)
 
-	post_starter := NewPostStarter(
+	postStarter := NewPostStarter(
 		agentClient,
 		f.logger,
 	)
@@ -77,7 +77,7 @@ func (f Factory) NewUpdater(
 		applier,
 		starter,
 		waiter,
-		post_starter,
+		postStarter,
 		f.eventLog,
 		f.logger,
 	)

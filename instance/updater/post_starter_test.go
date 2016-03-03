@@ -12,33 +12,33 @@ import (
 
 var _ = Describe("PostStarter", func() {
 	var (
-		agentClient  *fakebpagclient.FakeClient
-		logger       boshlog.Logger
-		post_starter PostStarter
+		agentClient *fakebpagclient.FakeClient
+		logger      boshlog.Logger
+		postStarter PostStarter
 	)
 
 	BeforeEach(func() {
 		agentClient = &fakebpagclient.FakeClient{}
 		logger = boshlog.NewLogger(boshlog.LevelNone)
-		post_starter = NewPostStarter(agentClient, logger)
+		postStarter = NewPostStarter(agentClient, logger)
 	})
 
 	Describe("PostStart", func() {
 		Context("when the script exits with a 0 exit status", func() {
-			It("returns nil", func() {
-				err := post_starter.PostStart()
+			It("does not return an error", func() {
+				err := postStarter.PostStart()
 				Expect(err).ToNot(HaveOccurred())
 			})
 		})
 
 		Context("when the script exits with a non 0 exit status", func() {
 			BeforeEach(func() {
-				agentClient.PostStartErr = bosherr.Error("Err")
+				agentClient.PostStartErr = bosherr.Error("some-error")
 			})
 
-			It("return error", func() {
-				err := post_starter.PostStart()
-				Expect(err).To(Equal(ErrPostScriptFailed))
+			It("return an error", func() {
+				err := postStarter.PostStart()
+				Expect(err).To(MatchError("Post-Starting: some-error"))
 			})
 		})
 	})

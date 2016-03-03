@@ -27,14 +27,13 @@ func NewStarter(
 func (s Starter) Start() error {
 	s.logger.Debug(starterLogTag, "Running pre-start")
 
-	_, err := s.agentClient.PreStart()
-	if err != nil {
+	if err := s.agentClient.PreStart(); err != nil {
 		return bosherr.WrapError(err, "Pre-Starting")
 	}
 
 	s.logger.Debug(starterLogTag, "Starting instance")
 
-	_, err = s.agentClient.Start()
+	_, err := s.agentClient.Start()
 	if err != nil {
 		return bosherr.WrapError(err, "Starting")
 	}

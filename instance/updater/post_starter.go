@@ -9,10 +9,6 @@ import (
 
 const postStarterLogTag = "PostStarter"
 
-var (
-	ErrPostScriptFailed = bosherr.Error("Post start scripts failed")
-)
-
 type PostStarter struct {
 	agentClient bpagclient.Client
 	logger      boshlog.Logger
@@ -30,11 +26,10 @@ func NewPostStarter(
 
 // PostStart runs after an instance reaches running state.
 func (w PostStarter) PostStart() error {
-	w.logger.Debug(starterLogTag, "Running post-start")
+	w.logger.Debug(postStarterLogTag, "Running post-start")
 
-	_, err := w.agentClient.PostStart()
-	if err != nil {
-		return ErrPostScriptFailed
+	if err := w.agentClient.PostStart(); err != nil {
+		return bosherr.WrapError(err, "Post-Starting")
 	}
 
 	return nil

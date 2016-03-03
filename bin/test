@@ -4,10 +4,10 @@ result=0
 
 bin=$(dirname $0)
 
-$bin/go install github.com/onsi/ginkgo/ginkgo
+$bin/go install github.com/cppforlife/bosh-provisioner/vendor/github.com/onsi/ginkgo/ginkgo
 
 echo -e "\n Formatting packages..."
-$bin/go fmt github.com/cppforlife/bosh-provisioner/...
+$bin/go fmt $($bin/go list github.com/cppforlife/bosh-provisioner/... | grep -v /vendor/)
 let "result+=$?"
 
 echo -e "\n Testing packages..."
@@ -15,7 +15,7 @@ $bin/env ginkgo -r $bin/..
 let "result+=$?"
 
 echo -e "\n Vetting packages for potential issues..."
-$bin/go vet github.com/cppforlife/bosh-provisioner/...
+$bin/go vet $($bin/go list github.com/cppforlife/bosh-provisioner/... | grep -v /vendor/)
 let "result+=$?"
 
 echo -e "\n Checking with golint..."
