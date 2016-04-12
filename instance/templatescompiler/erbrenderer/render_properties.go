@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"strings"
 
-	bosherr "github.com/cloudfoundry/bosh-agent/errors"
+	bosherr "github.com/cloudfoundry/bosh-utils/errors"
 
 	bpdep "github.com/cppforlife/bosh-provisioner/deployment"
 	bpreljob "github.com/cppforlife/bosh-provisioner/release/job"

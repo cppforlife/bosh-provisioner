@@ -3,8 +3,8 @@ package updater
 import (
 	"fmt"
 
-	bosherr "github.com/cloudfoundry/bosh-agent/errors"
-	boshlog "github.com/cloudfoundry/bosh-agent/logger"
+	bosherr "github.com/cloudfoundry/bosh-utils/errors"
+	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 
 	bpeventlog "github.com/cppforlife/bosh-provisioner/eventlog"
 	bpapplier "github.com/cppforlife/bosh-provisioner/instance/updater/applier"
@@ -15,11 +15,12 @@ const updaterLogTag = "Updater"
 type Updater struct {
 	instanceDesc string
 
-	drainer Drainer
-	stopper Stopper
-	applier bpapplier.Applier
-	starter Starter
-	waiter  Waiter
+	drainer     Drainer
+	stopper     Stopper
+	applier     bpapplier.Applier
+	starter     Starter
+	waiter      Waiter
+	postStarter PostStarter
 
 	eventLog bpeventlog.Log
 	logger   boshlog.Logger
@@ -32,17 +33,19 @@ func NewUpdater(
 	applier bpapplier.Applier,
 	starter Starter,
 	waiter Waiter,
+	postStarter PostStarter,
 	eventLog bpeventlog.Log,
 	logger boshlog.Logger,
 ) Updater {
 	return Updater{
 		instanceDesc: instanceDesc,
 
-		drainer: drainer,
-		stopper: stopper,
-		applier: applier,
-		starter: starter,
-		waiter:  waiter,
+		drainer:     drainer,
+		stopper:     stopper,
+		applier:     applier,
+		starter:     starter,
+		waiter:      waiter,
+		postStarter: postStarter,
 
 		eventLog: eventLog,
 		logger:   logger,
@@ -71,6 +74,13 @@ func (u Updater) SetUp() error {
 	err = task.End(u.waiter.Wait())
 	if err != nil {
 		return bosherr.WrapError(err, "Waiting")
+	}
+
+	task = stage.BeginTask("Post-Start")
+
+	err = task.End(u.postStarter.PostStart())
+	if err != nil {
+		return bosherr.WrapError(err, "Post-Starting")
 	}
 
 	return nil

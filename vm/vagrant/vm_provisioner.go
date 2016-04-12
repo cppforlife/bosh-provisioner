@@ -1,16 +1,16 @@
 package vagrant
 
 import (
-	bosherr "github.com/cloudfoundry/bosh-agent/errors"
-	boshlog "github.com/cloudfoundry/bosh-agent/logger"
+	bosherr "github.com/cloudfoundry/bosh-utils/errors"
+	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 
 	bpdep "github.com/cppforlife/bosh-provisioner/deployment"
 	bpvm "github.com/cppforlife/bosh-provisioner/vm"
 )
 
 var (
-	ErrAlreadyProvisioned = bosherr.New("Vagrant VM is already provisioned")
-	ErrNotProvisioned     = bosherr.New("Vagrant VM is not provisioned")
+	ErrAlreadyProvisioned = bosherr.Error("Vagrant VM is already provisioned")
+	ErrNotProvisioned     = bosherr.Error("Vagrant VM is not provisioned")
 )
 
 // VMProvisioner installs system dependencies that are usually

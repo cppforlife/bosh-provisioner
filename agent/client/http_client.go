@@ -12,8 +12,8 @@ import (
 	boshaction "github.com/cloudfoundry/bosh-agent/agent/action"
 	boshas "github.com/cloudfoundry/bosh-agent/agent/applier/applyspec"
 	boshcomp "github.com/cloudfoundry/bosh-agent/agent/compiler"
-	bosherr "github.com/cloudfoundry/bosh-agent/errors"
-	boshlog "github.com/cloudfoundry/bosh-agent/logger"
+	bosherr "github.com/cloudfoundry/bosh-utils/errors"
+	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 )
 
 const httpClientLogTag = "HTTPClient"
@@ -106,8 +106,18 @@ func (ac HTTPClient) Apply(desiredSpec boshas.V1ApplySpec) (string, error) {
 	return ac.makeStringRequest(ac.longRequest, "apply", reqArgs{desiredSpec})
 }
 
+func (ac HTTPClient) PreStart() error {
+	_, err := ac.makeQuickRequest("run_script", reqArgs{"pre-start", make(map[string]interface{})})
+	return err
+}
+
 func (ac HTTPClient) Start() (string, error) {
 	return ac.makeStringRequest(ac.quickRequest, "start", reqArgs{})
+}
+
+func (ac HTTPClient) PostStart() error {
+	_, err := ac.makeQuickRequest("run_script", reqArgs{"post-start", make(map[string]interface{})})
+	return err
 }
 
 func (ac HTTPClient) Stop() (string, error) {
@@ -250,7 +260,7 @@ func (ac HTTPClient) makeQuickRequest(method reqMethod, args reqArgs) (responseE
 	}
 
 	if responseBody.HasException() {
-		return responseBody, bosherr.New("Ended with exception %#v", responseBody.Exception)
+		return responseBody, bosherr.Errorf("Ended with exception %#v", responseBody.Exception)
 	}
 
 	return responseBody, nil

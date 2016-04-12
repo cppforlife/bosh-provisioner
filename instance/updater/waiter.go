@@ -3,8 +3,8 @@ package updater
 import (
 	"time"
 
-	bosherr "github.com/cloudfoundry/bosh-agent/errors"
-	boshlog "github.com/cloudfoundry/bosh-agent/logger"
+	bosherr "github.com/cloudfoundry/bosh-utils/errors"
+	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 
 	bpagclient "github.com/cppforlife/bosh-provisioner/agent/client"
 )
@@ -12,7 +12,7 @@ import (
 const waiterLogTag = "Waiter"
 
 var (
-	ErrNotRunning = bosherr.New("Instance did not reach running state")
+	ErrNotRunning = bosherr.Error("Instance did not reach running state")
 )
 
 type Waiter struct {

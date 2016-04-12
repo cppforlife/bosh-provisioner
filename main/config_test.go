@@ -1,7 +1,7 @@
 package main_test
 
 import (
-	fakesys "github.com/cloudfoundry/bosh-agent/system/fakes"
+	fakesys "github.com/cloudfoundry/bosh-utils/system/fakes"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
@@ -31,7 +31,6 @@ var _ = Describe("NewConfigFromPath", func() {
       },
       "vm_provisioner": {
         "agent_provisioner": {
-          "infrastructure": null,
           "platform": null,
           "configuration": null,
           "mbus": null
@@ -47,13 +46,24 @@ var _ = Describe("NewConfigFromPath", func() {
 
 		Expect(config.VMProvisioner.AgentProvisioner).To(Equal(
 			bpvm.AgentProvisionerConfig{
-				Infrastructure: "warden",
-				Platform:       "ubuntu",
+				Platform: "ubuntu",
 
 				Configuration: map[string]interface{}{
+					"Infrastructure": map[string]interface{}{
+						"Settings": map[string]interface{}{
+							"UseRegistry": true,
+							"Sources": []map[string]interface{}{
+								{
+									"SettingsPath": "warden-cpi-agent-env.json",
+									"Type":         "File",
+								},
+							},
+						},
+					},
 					"Platform": map[string]interface{}{
 						"Linux": map[string]interface{}{
 							"UseDefaultTmpDir": true,
+							"SkipDiskSetup":    true,
 						},
 					},
 				},

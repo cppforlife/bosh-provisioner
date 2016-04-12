@@ -1,8 +1,8 @@
 package applier
 
 import (
-	bosherr "github.com/cloudfoundry/bosh-agent/errors"
-	boshlog "github.com/cloudfoundry/bosh-agent/logger"
+	bosherr "github.com/cloudfoundry/bosh-utils/errors"
+	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 
 	bpagclient "github.com/cppforlife/bosh-provisioner/agent/client"
 	bpdep "github.com/cppforlife/bosh-provisioner/deployment"
@@ -65,7 +65,7 @@ func (a Applier) Apply() error {
 	// e.g. dynamic IP could now be set
 	err = a.templatesCompiler.Compile(a.depJob, a.instance)
 	if err != nil {
-		return bosherr.WrapError(err, "Compiling templates %s", a.depJob.Name)
+		return bosherr.WrapErrorf(err, "Compiling templates %s", a.depJob.Name)
 	}
 
 	a.logger.Debug(applierLogTag, "Applying job state")

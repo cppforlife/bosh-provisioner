@@ -1,8 +1,8 @@
 package provisioner
 
 import (
-	bosherr "github.com/cloudfoundry/bosh-agent/errors"
-	boshlog "github.com/cloudfoundry/bosh-agent/logger"
+	bosherr "github.com/cloudfoundry/bosh-utils/errors"
+	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 
 	bpeventlog "github.com/cppforlife/bosh-provisioner/eventlog"
 	bpvm "github.com/cppforlife/bosh-provisioner/vm"

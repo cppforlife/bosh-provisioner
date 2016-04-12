@@ -1,8 +1,8 @@
 package provisioner
 
 import (
-	bosherr "github.com/cloudfoundry/bosh-agent/errors"
-	boshlog "github.com/cloudfoundry/bosh-agent/logger"
+	bosherr "github.com/cloudfoundry/bosh-utils/errors"
+	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 
 	bpdep "github.com/cppforlife/bosh-provisioner/deployment"
 	bpeventlog "github.com/cppforlife/bosh-provisioner/eventlog"
@@ -60,7 +60,7 @@ func (p ReleaseCompiler) Compile(instance bpdep.Instance, depReleases []bpdep.Re
 	for _, depRelease := range depReleases {
 		err := p.compileRelease(pkgsCompiler, depRelease)
 		if err != nil {
-			return bosherr.WrapError(err, "Release %s", depRelease.Name)
+			return bosherr.WrapErrorf(err, "Release %s", depRelease.Name)
 		}
 	}
 

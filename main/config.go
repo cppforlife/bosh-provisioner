@@ -3,8 +3,8 @@ package main
 import (
 	"encoding/json"
 
-	bosherr "github.com/cloudfoundry/bosh-agent/errors"
-	boshsys "github.com/cloudfoundry/bosh-agent/system"
+	bosherr "github.com/cloudfoundry/bosh-utils/errors"
+	boshsys "github.com/cloudfoundry/bosh-utils/system"
 
 	bpeventlog "github.com/cppforlife/bosh-provisioner/eventlog"
 	bpprov "github.com/cppforlife/bosh-provisioner/provisioner"
@@ -19,17 +19,28 @@ var (
 
 		VMProvisioner: bpvm.ProvisionerConfig{
 			AgentProvisioner: bpvm.AgentProvisionerConfig{
-				Infrastructure: "warden",
-				Platform:       "ubuntu",
-				Mbus:           "https://user:password@127.0.0.1:4321/agent",
+				Platform: "ubuntu",
+				Mbus:     "https://user:password@127.0.0.1:4321/agent",
 			},
 		},
 	}
 
 	DefaultAgentConfiguration = map[string]interface{}{
+		"Infrastructure": map[string]interface{}{
+			"Settings": map[string]interface{}{
+				"UseRegistry": true,
+				"Sources": []map[string]interface{}{
+					{
+						"SettingsPath": "warden-cpi-agent-env.json",
+						"Type":         "File",
+					},
+				},
+			},
+		},
 		"Platform": map[string]interface{}{
 			"Linux": map[string]interface{}{
 				"UseDefaultTmpDir": true,
+				"SkipDiskSetup":    true,
 			},
 		},
 	}
@@ -62,7 +73,7 @@ func NewConfigFromPath(path string, fs boshsys.FileSystem) (Config, error) {
 
 	bytes, err := fs.ReadFile(path)
 	if err != nil {
-		return config, bosherr.WrapError(err, "Reading config %s", path)
+		return config, bosherr.WrapErrorf(err, "Reading config %s", path)
 	}
 
 	config = DefaultConfig
@@ -86,11 +97,11 @@ func NewConfigFromPath(path string, fs boshsys.FileSystem) (Config, error) {
 
 func (c Config) validate() error {
 	if c.AssetsDir == "" {
-		return bosherr.New("Must provide non-empty assets_dir")
+		return bosherr.Error("Must provide non-empty assets_dir")
 	}
 
 	if c.ReposDir == "" {
-		return bosherr.New("Must provide non-empty repos_dir")
+		return bosherr.Error("Must provide non-empty repos_dir")
 	}
 
 	err := c.EventLog.Validate()
@@ -99,7 +110,7 @@ func (c Config) validate() error {
 	}
 
 	if c.Blobstore.Type != bpprov.BlobstoreConfigTypeLocal {
-		return bosherr.New("Blobstore type must be local")
+		return bosherr.Error("Blobstore type must be local")
 	}
 
 	err = c.Blobstore.Validate()

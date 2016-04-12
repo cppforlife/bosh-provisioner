@@ -6,9 +6,9 @@ import (
 	"path/filepath"
 	"time"
 
-	bosherr "github.com/cloudfoundry/bosh-agent/errors"
-	boshlog "github.com/cloudfoundry/bosh-agent/logger"
-	boshsys "github.com/cloudfoundry/bosh-agent/system"
+	bosherr "github.com/cloudfoundry/bosh-utils/errors"
+	boshlog "github.com/cloudfoundry/bosh-utils/logger"
+	boshsys "github.com/cloudfoundry/bosh-utils/system"
 
 	bpagclient "github.com/cppforlife/bosh-provisioner/agent/client"
 	bpdep "github.com/cppforlife/bosh-provisioner/deployment"
@@ -166,7 +166,7 @@ func (p AgentProvisioner) placeBinaries() error {
 func (p AgentProvisioner) placeBinary(name, path string) error {
 	err := p.assetManager.Place(name, path)
 	if err != nil {
-		return bosherr.WrapError(err, "Placing %s binary", name)
+		return bosherr.WrapErrorf(err, "Placing %s binary", name)
 	}
 
 	err = p.cmds.ChmodX(path)
@@ -191,7 +191,7 @@ func (p AgentProvisioner) placeConfFiles() error {
 	for assetName, fileName := range fileNames {
 		err := p.assetManager.Place(assetName, filepath.Join("/var/vcap/bosh/", fileName))
 		if err != nil {
-			return bosherr.WrapError(err, "Placing %s", fileName)
+			return bosherr.WrapErrorf(err, "Placing %s", fileName)
 		}
 	}
 
@@ -204,13 +204,8 @@ func (p AgentProvisioner) placeConfFiles() error {
 }
 
 func (p AgentProvisioner) placeAgentConf() error {
-	// etc/infrastructure and etc/plaform is loaded by BOSH Agent runit script
-	err := p.fs.WriteFileString("/var/vcap/bosh/etc/infrastructure", p.agentProvisionerConfig.Infrastructure)
-	if err != nil {
-		return bosherr.WrapError(err, "Writing agent infrastructure")
-	}
-
-	err = p.fs.WriteFileString("/var/vcap/bosh/etc/platform", p.agentProvisionerConfig.Platform)
+	//  etc/plaform is loaded by BOSH Agent runit script
+	err := p.fs.WriteFileString("/var/vcap/bosh/etc/platform", p.agentProvisionerConfig.Platform)
 	if err != nil {
 		return bosherr.WrapError(err, "Writing agent platform")
 	}
@@ -265,6 +260,8 @@ func (p AgentProvisioner) placeInfSettings(instance bpdep.Instance) error {
 
 			"dns_record_name":  instance.DNDRecordName(netAssoc),
 			"cloud_properties": h{},
+
+			"preconfigured": true,
 		}
 	}
 
@@ -305,7 +302,7 @@ func (p AgentProvisioner) buildAgentClient() (bpagclient.Client, error) {
 		return nil, bosherr.WrapError(err, "Building agent client")
 	}
 
-	for i := 0; i < 10; i++ {
+	for i := 0; i < 120; i++ {
 		_, err = agentClient.Ping()
 		if err == nil {
 			return agentClient, nil

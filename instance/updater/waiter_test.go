@@ -5,7 +5,7 @@ import (
 	"time"
 
 	boshaction "github.com/cloudfoundry/bosh-agent/agent/action"
-	boshlog "github.com/cloudfoundry/bosh-agent/logger"
+	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 

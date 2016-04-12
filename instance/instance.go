@@ -1,8 +1,8 @@
 package instance
 
 import (
-	bosherr "github.com/cloudfoundry/bosh-agent/errors"
-	boshlog "github.com/cloudfoundry/bosh-agent/logger"
+	bosherr "github.com/cloudfoundry/bosh-utils/errors"
+	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 
 	bpdep "github.com/cppforlife/bosh-provisioner/deployment"
 	bpinstupd "github.com/cppforlife/bosh-provisioner/instance/updater"
@@ -38,7 +38,7 @@ func (i Instance) Deprovision() error {
 
 	err := i.updater.TearDown()
 	if err != nil {
-		return bosherr.WrapError(err, "Tearing down instance %d", i.depInstance.Index)
+		return bosherr.WrapErrorf(err, "Tearing down instance %d", i.depInstance.Index)
 	}
 
 	return nil

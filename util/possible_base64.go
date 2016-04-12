@@ -3,7 +3,7 @@ package util
 import (
 	"encoding/base64"
 
-	bosherr "github.com/cloudfoundry/bosh-agent/errors"
+	bosherr "github.com/cloudfoundry/bosh-utils/errors"
 )
 
 func DecodePossibleBase64Str(str string) (string, error) {
@@ -11,7 +11,7 @@ func DecodePossibleBase64Str(str string) (string, error) {
 	if str[len(str)-1:] == "=" {
 		bytes, err := base64.StdEncoding.DecodeString(str)
 		if err != nil {
-			return "", bosherr.WrapError(err, "Decoding base64 encoded str '%s'", str)
+			return "", bosherr.WrapErrorf(err, "Decoding base64 encoded str '%s'", str)
 		}
 
 		return string(bytes), nil

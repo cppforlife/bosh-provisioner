@@ -3,8 +3,8 @@ package downloader
 import (
 	"strings"
 
-	bosherr "github.com/cloudfoundry/bosh-agent/errors"
-	boshlog "github.com/cloudfoundry/bosh-agent/logger"
+	bosherr "github.com/cloudfoundry/bosh-utils/errors"
+	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 )
 
 const muxDownloaderLogTag = "Downloader"
@@ -46,14 +46,14 @@ func (d MuxDownloader) Download(url string) (string, error) {
 		}
 	}
 
-	return "", bosherr.New("URL %s without matching downloader", url)
+	return "", bosherr.Errorf("URL %s without matching downloader", url)
 }
 
 func (d MuxDownloader) CleanUp(path string) error {
 	downloader, ok := d.downloadedPaths[path]
 	if !ok {
 		// programmer error
-		return bosherr.New("Unknown path %s requested to be cleaned up", path)
+		return bosherr.Errorf("Unknown path %s requested to be cleaned up", path)
 	}
 
 	err := downloader.CleanUp(path)

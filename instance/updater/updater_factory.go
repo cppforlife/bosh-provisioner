@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	boshlog "github.com/cloudfoundry/bosh-agent/logger"
+	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 
 	bpagclient "github.com/cppforlife/bosh-provisioner/agent/client"
 	bpdep "github.com/cppforlife/bosh-provisioner/deployment"
@@ -65,6 +65,11 @@ func (f Factory) NewUpdater(
 		f.logger,
 	)
 
+	postStarter := NewPostStarter(
+		agentClient,
+		f.logger,
+	)
+
 	updater := NewUpdater(
 		fmt.Sprintf("%s/%d", instance.JobName, instance.Index),
 		drainer,
@@ -72,6 +77,7 @@ func (f Factory) NewUpdater(
 		applier,
 		starter,
 		waiter,
+		postStarter,
 		f.eventLog,
 		f.logger,
 	)

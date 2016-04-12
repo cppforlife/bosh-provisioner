@@ -1,8 +1,8 @@
 package provisioner
 
 import (
-	bosherr "github.com/cloudfoundry/bosh-agent/errors"
-	boshlog "github.com/cloudfoundry/bosh-agent/logger"
+	bosherr "github.com/cloudfoundry/bosh-utils/errors"
+	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 
 	bpdep "github.com/cppforlife/bosh-provisioner/deployment"
 	bpeventlog "github.com/cppforlife/bosh-provisioner/eventlog"
@@ -109,13 +109,13 @@ func (p SingleConfiguredVMProvisioner) validateInstance(deployment bpdep.Deploym
 	var instance bpdep.Instance
 
 	if len(deployment.Jobs) > 1 {
-		return job, instance, bosherr.New("Must have exactly 1 job")
+		return job, instance, bosherr.Error("Must have exactly 1 job")
 	}
 
 	job = deployment.Jobs[0]
 
 	if len(job.Instances) != 1 {
-		return job, instance, bosherr.New("Must have exactly 1 instance")
+		return job, instance, bosherr.Error("Must have exactly 1 instance")
 	}
 
 	instance = job.Instances[0]

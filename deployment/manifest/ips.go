@@ -4,7 +4,7 @@ import (
 	gonet "net"
 	"strings"
 
-	bosherr "github.com/cloudfoundry/bosh-agent/errors"
+	bosherr "github.com/cloudfoundry/bosh-utils/errors"
 )
 
 func NewIPsFromStrings(strs []string) ([]gonet.IP, error) {
@@ -13,7 +13,7 @@ func NewIPsFromStrings(strs []string) ([]gonet.IP, error) {
 	for _, str := range strs {
 		ip := gonet.ParseIP(strings.Trim(str, " "))
 		if ip == nil {
-			return ips, bosherr.New("Parsing IP %s", str)
+			return ips, bosherr.Errorf("Parsing IP %s", str)
 		}
 
 		ips = append(ips, ip)

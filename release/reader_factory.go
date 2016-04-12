@@ -3,8 +3,8 @@ package release
 import (
 	"strings"
 
-	boshlog "github.com/cloudfoundry/bosh-agent/logger"
-	boshsys "github.com/cloudfoundry/bosh-agent/system"
+	boshlog "github.com/cloudfoundry/bosh-utils/logger"
+	boshsys "github.com/cloudfoundry/bosh-utils/system"
 
 	bpdload "github.com/cppforlife/bosh-provisioner/downloader"
 	bptar "github.com/cppforlife/bosh-provisioner/tar"

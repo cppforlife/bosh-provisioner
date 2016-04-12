@@ -1,8 +1,8 @@
 package vagrant
 
 import (
-	boshlog "github.com/cloudfoundry/bosh-agent/logger"
-	boshsys "github.com/cloudfoundry/bosh-agent/system"
+	boshlog "github.com/cloudfoundry/bosh-utils/logger"
+	boshsys "github.com/cloudfoundry/bosh-utils/system"
 
 	bpeventlog "github.com/cppforlife/bosh-provisioner/eventlog"
 	bpvm "github.com/cppforlife/bosh-provisioner/vm"

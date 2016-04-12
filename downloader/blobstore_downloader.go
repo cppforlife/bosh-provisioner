@@ -3,9 +3,9 @@ package downloader
 import (
 	gourl "net/url"
 
-	boshblob "github.com/cloudfoundry/bosh-agent/blobstore"
-	bosherr "github.com/cloudfoundry/bosh-agent/errors"
-	boshlog "github.com/cloudfoundry/bosh-agent/logger"
+	boshblob "github.com/cloudfoundry/bosh-utils/blobstore"
+	bosherr "github.com/cloudfoundry/bosh-utils/errors"
+	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 )
 
 const blobstoreDownloaderLogTag = "BlobstoreDownloader"
@@ -29,7 +29,7 @@ func NewBlobstoreDownloader(
 func (d BlobstoreDownloader) Download(url string) (string, error) {
 	parsedURL, err := gourl.Parse(url)
 	if err != nil {
-		return "", bosherr.WrapError(err, "Parsing url %s", url)
+		return "", bosherr.WrapErrorf(err, "Parsing url %s", url)
 	}
 
 	var fingerprint string
