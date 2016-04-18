@@ -81,6 +81,11 @@ func (p ReleaseCompiler) compileRelease(pkgsCompiler bppkgscomp.PackagesCompiler
 
 	defer relReader.Close()
 
+	err = pkgsCompiler.ApplyPrecompiledPackages(relRelease)
+	if err != nil {
+		return bosherr.WrapError(err, "Applying precompiled release packages")
+	}
+
 	err = pkgsCompiler.Compile(relRelease)
 	if err != nil {
 		return bosherr.WrapError(err, "Compiling release packages")

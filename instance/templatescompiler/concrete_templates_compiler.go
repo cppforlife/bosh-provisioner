@@ -63,6 +63,14 @@ func (tc ConcreteTemplatesCompiler) Precompile(release bprel.Release) error {
 
 		allPkgs = append(allPkgs, *pkg)
 	}
+	for _, pkg := range release.CompiledPackages {
+		if pkg == nil {
+			// todo panic or should not be here?
+			return bosherr.Error("Expected release to not have nil package")
+		}
+
+		allPkgs = append(allPkgs, *pkg)
+	}
 
 	for _, job := range release.Jobs {
 		jobRec, found, err := tc.jobsRepo.Find(job)

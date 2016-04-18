@@ -122,6 +122,11 @@ func (r TarReader) populateReleaseTarPaths(release *Release) {
 		fileName := pkg.Name + ".tgz"
 		pkg.TarPath = filepath.Join(r.extractPath, "packages", fileName)
 	}
+
+	for _, pkg := range release.CompiledPackages {
+		fileName := pkg.Name + ".tgz"
+		pkg.TarPath = filepath.Join(r.extractPath, "compiled_packages", fileName)
+	}
 }
 
 /*

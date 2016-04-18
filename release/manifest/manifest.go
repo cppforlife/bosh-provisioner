@@ -15,8 +15,9 @@ type Release struct {
 	Name    string `yaml:"name"`
 	Version string `yaml:"version"`
 
-	Jobs     []Job     `yaml:"jobs"`
-	Packages []Package `yaml:"packages"`
+	Jobs             []Job     `yaml:"jobs"`
+	Packages         []Package `yaml:"packages"`
+	CompiledPackages []Package `yaml:"compiled_packages"`
 
 	CommitHash         string `yaml:"commit_hash"`
 	UncommittedChanges bool   `yaml:"uncommitted_changes"`

@@ -46,6 +46,27 @@ func NewConcretePackagesCompiler(
 	}
 }
 
+func (pc ConcretePackagesCompiler) ApplyPrecompiledPackages(release bprel.Release) error {
+	for _, pkg := range release.CompiledPackages {
+		blobID, fingerprint, err := pc.blobstore.Create(pkg.TarPath)
+		if err != nil {
+			return bosherr.WrapErrorf(err, "Creating compiled package blob %s", pkg.Name)
+		}
+
+		pkgRec := bpcpkgsrepo.CompiledPackageRecord{
+			BlobID: blobID,
+			SHA1:   fingerprint,
+		}
+
+		err = pc.compiledPackagesRepo.Save(*pkg, pkgRec)
+		if err != nil {
+			return bosherr.WrapErrorf(err, "Saving compiled package %s", pkg.Name)
+		}
+	}
+
+	return nil
+}
+
 // Compile populates blobstore with compiled packages for a given release packages.
 // All packages are compiled regardless if they will be later used or not.
 // Currently Compile does not account for stemcell differences.
