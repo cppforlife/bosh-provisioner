@@ -15,7 +15,8 @@ type Release struct {
 
 	Jobs []Job
 
-	Packages []*Package
+	Packages         []*Package
+	CompiledPackages []*Package
 }
 
 type Job struct {
@@ -98,6 +99,7 @@ func (r Release) ResolvedPackageDependencies() []*Package {
 func (r *Release) populateFromManifest(manifest bprelman.Manifest) {
 	r.populateRelease(manifest.Release)
 	r.populatePackages(manifest.Release.Packages)
+	r.populateCompiledPackages(manifest.Release.CompiledPackages)
 	r.populateJobs(manifest.Release.Jobs)
 	r.Manifest = manifest
 }
@@ -108,6 +110,20 @@ func (r *Release) populateRelease(manRelease bprelman.Release) {
 
 	r.CommitHash = manRelease.CommitHash
 	r.UncommittedChanges = manRelease.UncommittedChanges
+}
+
+func (r *Release) populateCompiledPackages(manCompiledPkgs []bprelman.Package) {
+	for _, manPkg := range manCompiledPkgs {
+		pkg := Package{
+			Name:    manPkg.Name,
+			Version: manPkg.Version,
+
+			Fingerprint: manPkg.Fingerprint,
+			SHA1:        manPkg.SHA1,
+		}
+
+		r.CompiledPackages = append(r.CompiledPackages, &pkg)
+	}
 }
 
 func (r *Release) populatePackages(manPkgs []bprelman.Package) {

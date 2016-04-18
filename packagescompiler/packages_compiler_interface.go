@@ -16,5 +16,6 @@ type CompiledPackageRecord struct {
 // todo account for stemcells
 type PackagesCompiler interface {
 	Compile(bprel.Release) error
+	ApplyPrecompiledPackages(bprel.Release) error
 	FindCompiledPackage(bprel.Package) (CompiledPackageRecord, error)
 }
